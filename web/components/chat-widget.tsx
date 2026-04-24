@@ -1,8 +1,11 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+
+export const OPEN_CHAT_PREFILL_EVENT = "openautobidder:chat-prefill";
+export const CHAT_WIDGET_STATE_EVENT = "openautobidder:chat-state";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -15,11 +18,162 @@ const quickPrompts = [
   "Welche Rolle spielen Netzengpaesse?",
 ];
 
+function ChatHeader({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="flex items-center justify-between border-b border-primary/10 px-5 py-4">
+      <p className="flex items-center gap-2 font-medium text-primary">
+        <span className="inline-flex h-2.5 w-2.5 rounded-full bg-accent" />
+        AI Lernassistent
+      </p>
+      <button
+        type="button"
+        onClick={onClose}
+        className="rounded-card px-2 py-1 text-xs text-text-secondary transition hover:bg-background-alt hover:text-text"
+      >
+        Schliessen
+      </button>
+    </div>
+  );
+}
+
+function ChatMessageList({
+  isLoading,
+  messages,
+  viewportRef,
+}: {
+  isLoading: boolean;
+  messages: ChatMessage[];
+  viewportRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  return (
+    <div
+      ref={viewportRef}
+      className="flex-1 space-y-3 overflow-y-auto bg-background px-4 py-4 md:px-5"
+      aria-live="polite"
+    >
+      {messages.map((msg, idx) => (
+        <div
+          key={`${msg.role}-${idx}`}
+          className={`max-w-[92%] rounded-card px-3.5 py-2.5 text-sm ${
+            msg.role === "assistant"
+              ? "bg-surface text-text shadow-[0_2px_10px_rgba(46,74,62,0.07)]"
+              : "ml-auto bg-primary text-white"
+          }`}
+        >
+          {msg.role === "assistant" ? (
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                h1: ({ children }) => <h4 className="mb-1 text-base font-semibold">{children}</h4>,
+                h2: ({ children }) => <h5 className="mb-1 text-sm font-semibold">{children}</h5>,
+                h3: ({ children }) => <h6 className="mb-1 text-sm font-semibold">{children}</h6>,
+                p: ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>,
+                ul: ({ children }) => <ul className="mb-2 list-disc space-y-1 pl-5 last:mb-0">{children}</ul>,
+                ol: ({ children }) => <ol className="mb-2 list-decimal space-y-1 pl-5 last:mb-0">{children}</ol>,
+                li: ({ children }) => <li>{children}</li>,
+                strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                code: ({ children }) => (
+                  <code className="rounded bg-background-alt px-1 py-0.5 text-[0.82em]">{children}</code>
+                ),
+                table: ({ children }) => (
+                  <div className="my-2 w-full overflow-x-auto rounded-card border border-primary/10">
+                    <table className="min-w-[520px] border-collapse text-left text-xs md:text-sm">
+                      {children}
+                    </table>
+                  </div>
+                ),
+                thead: ({ children }) => <thead className="bg-background-alt text-text">{children}</thead>,
+                tbody: ({ children }) => <tbody className="bg-white">{children}</tbody>,
+                tr: ({ children }) => <tr className="border-b border-primary/10 last:border-b-0">{children}</tr>,
+                th: ({ children }) => <th className="px-3 py-2 font-semibold whitespace-nowrap">{children}</th>,
+                td: ({ children }) => (
+                  <td className="px-3 py-2 align-top text-text-secondary">{children}</td>
+                ),
+              }}
+            >
+              {msg.content}
+            </ReactMarkdown>
+          ) : (
+            <p className="leading-relaxed">{msg.content}</p>
+          )}
+        </div>
+      ))}
+      {isLoading ? (
+        <div className="max-w-[92%] rounded-card bg-surface px-3.5 py-2.5 text-sm text-text-secondary shadow-[0_2px_10px_rgba(46,74,62,0.07)]">
+          Antwort wird vorbereitet...
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ChatComposer({
+  error,
+  isLoading,
+  onChangeQuestion,
+  onPickPrompt,
+  onSubmit,
+  question,
+  textareaRef,
+}: {
+  error: string | null;
+  isLoading: boolean;
+  onChangeQuestion: (value: string) => void;
+  onPickPrompt: (prompt: string) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  question: string;
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+}) {
+  const onTextareaKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      const form = event.currentTarget.form;
+      if (form) {
+        form.requestSubmit();
+      }
+    }
+  };
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-3 border-t border-primary/10 bg-surface px-4 py-4 md:px-5">
+      <textarea
+        ref={textareaRef}
+        value={question}
+        onChange={(event) => onChangeQuestion(event.target.value)}
+        onKeyDown={onTextareaKeyDown}
+        className="min-h-24 w-full rounded-card border border-primary/20 bg-background px-3 py-2 text-sm leading-relaxed outline-none transition focus:border-primary"
+        placeholder="Frage zu BESS Revenue Stacking..."
+      />
+      <div className="flex flex-wrap gap-2">
+        {quickPrompts.map((prompt) => (
+          <button
+            key={prompt}
+            type="button"
+            onClick={() => onPickPrompt(prompt)}
+            className="rounded-card border border-primary/15 bg-background px-2.5 py-1 text-xs text-primary transition hover:border-primary/35"
+          >
+            {prompt}
+          </button>
+        ))}
+      </div>
+      {error ? <p className="text-xs text-error">{error}</p> : null}
+      <button
+        type="submit"
+        disabled={isLoading}
+        className="rounded-card bg-primary px-4 py-2 text-sm font-medium text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {isLoading ? "Sende..." : "Senden"}
+      </button>
+    </form>
+  );
+}
+
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [question, setQuestion] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
@@ -33,6 +187,76 @@ export function ChatWidget() {
       "OpenAutobidder-DE erklaert Revenue Stacking fuer Batteriespeicher in Deutschland mit Fokus auf Arbitrage, FCR, aFRR, Kapazitaet und Netzengpass-Anreize.",
     [],
   );
+  const messageViewportRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const handlePrefillEvent = (event: Event) => {
+      const customEvent = event as CustomEvent<{ prompt?: string }>;
+      const prompt = customEvent.detail?.prompt?.trim();
+      if (!prompt) return;
+      setIsOpen(true);
+      setQuestion(prompt);
+      setError(null);
+    };
+
+    window.addEventListener(OPEN_CHAT_PREFILL_EVENT, handlePrefillEvent as EventListener);
+    return () => {
+      window.removeEventListener(OPEN_CHAT_PREFILL_EVENT, handlePrefillEvent as EventListener);
+    };
+  }, []);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const update = () => setIsMobileViewport(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    document.body.dataset.chatWidgetOpen = isOpen ? "true" : "false";
+    window.dispatchEvent(
+      new CustomEvent<{ open: boolean }>(CHAT_WIDGET_STATE_EVENT, {
+        detail: { open: isOpen },
+      }),
+    );
+    return () => {
+      delete document.body.dataset.chatWidgetOpen;
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !isMobileViewport) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isMobileViewport, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    textareaRef.current?.focus();
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!messageViewportRef.current) return;
+    const latestMessage = messages[messages.length - 1];
+    if (!isLoading && latestMessage?.role !== "assistant") return;
+    messageViewportRef.current.scrollTo({
+      top: messageViewportRef.current.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [isLoading, messages]);
+
+  useEffect(() => {
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsOpen(false);
+    };
+    window.addEventListener("keydown", onEscape);
+    return () => window.removeEventListener("keydown", onEscape);
+  }, []);
 
   async function askQuestion(input: string) {
     const trimmed = input.trim();
@@ -85,129 +309,51 @@ export function ChatWidget() {
   }
 
   return (
-    <div className="fixed bottom-5 right-5 z-[60] md:bottom-7 md:right-7">
+    <div
+      data-chat-widget-root="true"
+      className="fixed bottom-4 right-4 z-[60] md:bottom-7 md:right-7"
+    >
       {isOpen ? (
-        <div className="mb-3 w-[min(92vw,420px)] rounded-card border border-primary/30 bg-surface p-4 shadow-[0_10px_28px_rgba(46,74,62,0.2)] ring-1 ring-accent/45">
-          <div className="mb-3 flex items-center justify-between">
-            <p className="flex items-center gap-2 font-medium text-primary">
-              <span className="inline-flex h-2.5 w-2.5 rounded-full bg-accent shadow-[0_0_0_4px_rgba(201,168,108,0.24)]" />
-              AI Lernassistent
-            </p>
-            <button
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="rounded-card px-2 py-1 text-xs text-text-secondary hover:bg-background-alt"
-            >
-              Schliessen
-            </button>
-          </div>
-
-          <div className="max-h-[320px] space-y-3 overflow-y-auto rounded-card bg-background p-3">
-            {messages.map((msg, idx) => (
-              <div
-                key={`${msg.role}-${idx}`}
-                className={`rounded-card px-3 py-2 text-sm ${
-                  msg.role === "assistant"
-                    ? "bg-white text-text shadow-sm"
-                    : "ml-auto max-w-[88%] bg-primary text-white"
-                }`}
-              >
-                {msg.role === "assistant" ? (
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      h1: ({ children }) => <h4 className="mb-1 text-base font-semibold">{children}</h4>,
-                      h2: ({ children }) => <h5 className="mb-1 text-sm font-semibold">{children}</h5>,
-                      h3: ({ children }) => <h6 className="mb-1 text-sm font-semibold">{children}</h6>,
-                      p: ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>,
-                      ul: ({ children }) => <ul className="mb-2 list-disc space-y-1 pl-5 last:mb-0">{children}</ul>,
-                      ol: ({ children }) => <ol className="mb-2 list-decimal space-y-1 pl-5 last:mb-0">{children}</ol>,
-                      li: ({ children }) => <li>{children}</li>,
-                      strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-                      code: ({ children }) => (
-                        <code className="rounded bg-background-alt px-1 py-0.5 text-[0.82em]">{children}</code>
-                      ),
-                      table: ({ children }) => (
-                        <div className="my-2 w-full overflow-x-auto rounded-card border border-primary/10">
-                          <table className="min-w-[560px] border-collapse text-left text-xs md:text-sm">
-                            {children}
-                          </table>
-                        </div>
-                      ),
-                      thead: ({ children }) => (
-                        <thead className="bg-background-alt text-text">{children}</thead>
-                      ),
-                      tbody: ({ children }) => <tbody className="bg-white">{children}</tbody>,
-                      tr: ({ children }) => (
-                        <tr className="border-b border-primary/10 last:border-b-0">{children}</tr>
-                      ),
-                      th: ({ children }) => (
-                        <th className="px-3 py-2 font-semibold whitespace-nowrap">{children}</th>
-                      ),
-                      td: ({ children }) => (
-                        <td className="px-3 py-2 align-top text-text-secondary">{children}</td>
-                      ),
-                    }}
-                  >
-                    {msg.content}
-                  </ReactMarkdown>
-                ) : (
-                  <p className="leading-relaxed">{msg.content}</p>
-                )}
-              </div>
-            ))}
-            {isLoading ? (
-              <div className="rounded-card bg-white px-3 py-2 text-sm text-text-secondary shadow-sm">
-                Antwort wird vorbereitet...
-              </div>
-            ) : null}
-          </div>
-
-          <form onSubmit={onSubmit} className="mt-3 space-y-3">
-            <textarea
-              value={question}
-              onChange={(event) => setQuestion(event.target.value)}
-              className="min-h-20 w-full rounded-card border border-primary/25 bg-background px-3 py-2 text-base outline-none focus:border-primary md:text-sm"
-              placeholder="Frage zu BESS Revenue Stacking..."
+        <div className="fixed inset-0 z-[65] md:inset-auto md:bottom-24 md:right-7 md:w-[min(92vw,520px)]">
+          <div
+            className="absolute inset-0 bg-[rgba(44,44,44,0.28)] md:hidden"
+            onClick={() => setIsOpen(false)}
+            aria-hidden="true"
+          />
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-label="AI Lernassistent"
+            className="absolute inset-3 flex min-h-0 flex-col overflow-hidden rounded-card border border-primary/15 bg-surface shadow-[0_12px_30px_rgba(46,74,62,0.16)] md:inset-auto md:relative md:h-[min(78vh,680px)]"
+          >
+            <ChatHeader onClose={() => setIsOpen(false)} />
+            <ChatMessageList
+              isLoading={isLoading}
+              messages={messages}
+              viewportRef={messageViewportRef}
             />
-            <div className="flex flex-wrap gap-2">
-              {quickPrompts.map((prompt) => (
-                <button
-                  key={prompt}
-                  type="button"
-                  onClick={() => setQuestion(prompt)}
-                  className="rounded-card border border-primary/15 bg-white px-2 py-1 text-xs text-primary hover:border-primary/40"
-                >
-                  {prompt}
-                </button>
-              ))}
-            </div>
-            {error ? <p className="text-xs text-[#B85C38]">{error}</p> : null}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="rounded-card bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-            >
-              {isLoading ? "Sende..." : "Senden"}
-            </button>
-          </form>
+            <ChatComposer
+              error={error}
+              isLoading={isLoading}
+              onChangeQuestion={setQuestion}
+              onPickPrompt={setQuestion}
+              onSubmit={onSubmit}
+              question={question}
+              textareaRef={textareaRef}
+            />
+          </section>
         </div>
       ) : null}
 
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`relative flex h-14 w-14 items-center justify-center rounded-full border text-2xl text-primary shadow-card transition hover:scale-[1.02] ${
-          isOpen
-            ? "border-accent/80 bg-accent ring-4 ring-accent/35"
-            : "border-primary/20 bg-accent"
+        className={`relative flex h-14 w-14 items-center justify-center rounded-full border text-sm font-semibold text-primary shadow-card transition hover:scale-[1.02] ${
+          isOpen ? "border-primary/40 bg-background-alt" : "border-primary/20 bg-accent"
         }`}
-        aria-label="AI Chat oeffnen"
+        aria-label={isOpen ? "AI Chat schliessen" : "AI Chat oeffnen"}
       >
-        {isOpen ? (
-          <span className="pointer-events-none absolute inset-0 rounded-full border border-accent/70 animate-pulse" />
-        ) : null}
-        💬
+        AI
       </button>
     </div>
   );

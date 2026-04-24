@@ -22,6 +22,11 @@ const valueCards = [
     description:
       "Open-Source-Grundlage fuer Forschung, Weiterbildung und transparente Diskussion.",
   },
+  {
+    title: "Tagesupdate & Tagesthemen",
+    description:
+      "Taegliche Lektion plus die wichtigsten deutschen Marktthemen und regulatorischen Entwicklungen.",
+  },
 ];
 
 export default function HomePage() {
@@ -72,17 +77,39 @@ export default function HomePage() {
       </section>
 
       <section className="container-shell pb-16">
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+        <FadeIn className="mb-6 rounded-card border border-accent/35 bg-surface p-6 shadow-card">
+          <p className="text-sm font-medium uppercase tracking-[0.14em] text-accent">Tagesupdate</p>
+          <h2 className="mt-2 text-2xl md:text-3xl">Lektion zuerst, aktuelle Tagesthemen direkt danach</h2>
+          <p className="mt-2 text-sm text-text-secondary md:text-base">
+            Das Tagesupdate verbindet Lernfortschritt mit der taeglichen Marktlage in Deutschland.
+          </p>
+          <Link
+            href="/tagesupdate"
+            className="mt-4 inline-block rounded-card bg-primary px-5 py-2 text-sm font-medium text-white transition hover:bg-primary/90"
+          >
+            Tagesupdate oeffnen
+          </Link>
+        </FadeIn>
+
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-5">
           {valueCards.map((card, index) => (
             <FadeIn
               key={card.title}
               delay={index * 0.06}
               className="rounded-card bg-surface p-7 shadow-card"
             >
-              <h2 className="text-2xl">{card.title}</h2>
+              <h3 className="text-2xl">{card.title}</h3>
               <p className="mt-3 text-sm leading-relaxed text-text-secondary">
                 {card.description}
               </p>
+              {card.title.includes("Tagesupdate") && (
+                <Link
+                  href="/tagesupdate"
+                  className="mt-4 inline-block text-sm font-medium text-primary underline decoration-primary/40 underline-offset-4 transition hover:decoration-primary"
+                >
+                  Zum Tagesupdate
+                </Link>
+              )}
             </FadeIn>
           ))}
         </div>
