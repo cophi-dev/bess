@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { z } from "zod";
 
 const MessageSchema = z.object({
@@ -21,26 +23,46 @@ const DEFAULT_BASE_URL = "https://api.x.ai/v1/chat/completions";
 const DEFAULT_MODEL = "grok-4.20-0309-non-reasoning";
 const MAX_HISTORY_MESSAGES = 6;
 
+function loadRootEnvMap(): Record<string, string> {
+  // Support local development from monorepo root `.env`.
+  const rootEnvPath = resolve(process.cwd(), "..", ".env");
+  if (!existsSync(rootEnvPath)) return {};
+
+  const envMap: Record<string, string> = {};
+  const raw = readFileSync(rootEnvPath, "utf-8");
+  for (const line of raw.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#") || !trimmed.includes("=")) continue;
+    const [key, ...rest] = trimmed.split("=");
+    const value = rest.join("=").trim().replace(/^["']|["']$/g, "");
+    if (key.trim()) envMap[key.trim()] = value;
+  }
+  return envMap;
+}
+
 function loadServerChatConfig() {
+  const rootEnv = loadRootEnvMap();
+  const get = (key: string) => process.env[key] || rootEnv[key];
+
   const apiKey =
-    process.env.OPENAUTOBIDDER_WEB_CHAT_API_KEY ||
-    process.env.OPENAUTOBIDDER_CHAT_API_KEY ||
-    process.env.XAI_API_KEY ||
-    process.env.GEMINI_API_KEY;
+    get("OPENAUTOBIDDER_WEB_CHAT_API_KEY") ||
+    get("OPENAUTOBIDDER_CHAT_API_KEY") ||
+    get("XAI_API_KEY") ||
+    get("GEMINI_API_KEY");
 
   const baseUrl =
-    process.env.OPENAUTOBIDDER_WEB_CHAT_BASE_URL ||
-    process.env.OPENAUTOBIDDER_CHAT_BASE_URL ||
+    get("OPENAUTOBIDDER_WEB_CHAT_BASE_URL") ||
+    get("OPENAUTOBIDDER_CHAT_BASE_URL") ||
     DEFAULT_BASE_URL;
 
   const model =
-    process.env.OPENAUTOBIDDER_WEB_CHAT_MODEL ||
-    process.env.OPENAUTOBIDDER_CHAT_MODEL ||
+    get("OPENAUTOBIDDER_WEB_CHAT_MODEL") ||
+    get("OPENAUTOBIDDER_CHAT_MODEL") ||
     DEFAULT_MODEL;
 
   const temperatureRaw =
-    process.env.OPENAUTOBIDDER_WEB_CHAT_TEMPERATURE ||
-    process.env.OPENAUTOBIDDER_CHAT_TEMPERATURE ||
+    get("OPENAUTOBIDDER_WEB_CHAT_TEMPERATURE") ||
+    get("OPENAUTOBIDDER_CHAT_TEMPERATURE") ||
     "0.2";
   const temperature = Number.parseFloat(temperatureRaw);
 
@@ -95,7 +117,7 @@ export async function POST(req: Request) {
 
     const { question, history, pageContext } = parsedBody.data;
     const systemPrompt =
-      "Du bist OpenAutobidder-DE Copilot. Erklaere Revenue Stacking fuer Batteriespeicher in Deutschland klar, knapp, praxisnah und transparent.";
+      "Du bist OpenAutobidder-DE Copilot. Erklaere Revenue Stacking fuer Batteriespeicher in Deutschland klar, knapp, praxisnah und transparent. Bevorzuge kurze Abschnitte und Bulletpoints; nutze Tabellen nur wenn wirklich noetig und halte sie kompakt.";
 
     const messages: OpenAIChatMessage[] = [
       { role: "system", content: systemPrompt },

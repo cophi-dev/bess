@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { FadeIn } from "@/components/fade-in";
-import { HomeAiChat } from "@/components/home-ai-chat";
 
 const valueCards = [
   {
@@ -110,8 +109,6 @@ export default function HomePage() {
           </FadeIn>
         </div>
       </section>
-
-      <HomeAiChat />
     </div>
   );
 }
