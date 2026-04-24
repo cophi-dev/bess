@@ -5,22 +5,29 @@ export function SiteFooter() {
     <footer className="mt-20 border-t border-primary/10 bg-background-alt">
       <div className="container-shell grid gap-8 py-12 md:grid-cols-3">
         <div>
-          <p className="font-semibold text-primary">OpenAutobidder-DE</p>
+          <p className="font-semibold text-primary">BESS Kompass</p>
           <p className="mt-2 text-sm text-text-secondary">
-            Bildungsplattform fuer Revenue Stacking im deutschen BESS-Markt.
+            Bildungsangebot zu Revenue Stacking im deutschen BESS-Markt. Das
+            offene Simulationsmodell heisst OpenAutobidder-DE.
           </p>
         </div>
         <div>
           <p className="font-semibold text-text">Schnellzugriff</p>
           <div className="mt-2 flex flex-col gap-2 text-sm text-text-secondary">
-            <Link href="/revenue-stacking" className="hover:text-primary">
-              Revenue Stacking verstehen
+            <Link href="/mission" className="hover:text-primary">
+              Mission und Why BESS
             </Link>
-            <Link href="/german-market" className="hover:text-primary">
-              Deutscher Markt 2026
+            <Link href="/wirtschaftlichkeit" className="hover:text-primary">
+              Wirtschaftlichkeit
             </Link>
-            <Link href="/resources" className="hover:text-primary">
-              Datenquellen und Glossar
+            <Link href="/netzregulierung" className="hover:text-primary">
+              Netzregulierung
+            </Link>
+            <Link href="/daten" className="hover:text-primary">
+              Echtzeitdaten und KPIs
+            </Link>
+            <Link href="/news" className="hover:text-primary">
+              News
             </Link>
           </div>
         </div>
@@ -35,8 +42,8 @@ export function SiteFooter() {
             >
               GitHub Repository
             </a>
-            <Link href="/about" className="hover:text-primary">
-              Mission und Disclaimer
+            <Link href="/simulator" className="hover:text-primary">
+              Simulator starten
             </Link>
           </div>
         </div>

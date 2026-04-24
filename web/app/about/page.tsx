@@ -4,7 +4,7 @@ import { FadeIn } from "@/components/fade-in";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Mission, Transparenz und Mitmachen bei OpenAutobidder-DE.",
+    "Mission, Transparenz und Mitmachen: BESS-Faelle wirtschaftlich und systemisch bewerten.",
 };
 
 export default function AboutPage() {
@@ -13,8 +13,8 @@ export default function AboutPage() {
       <FadeIn className="max-w-3xl">
         <h1 className="text-4xl md:text-5xl">Unsere Mission</h1>
         <p className="mt-4 text-lg text-text-secondary">
-          OpenAutobidder-DE macht die Wirtschaftlichkeit von Batteriespeichern
-          im deutschen Markt verstaendlich, transparent und diskutierbar.
+          BESS Kompass macht Batteriespeicher im deutschen Markt verstaendlich:
+          als Geschaeftsmodell und als Teil eines belastbaren Stromsystems.
         </p>
       </FadeIn>
 
@@ -23,7 +23,8 @@ export default function AboutPage() {
           <h2 className="text-2xl">Transparenz statt Blackbox</h2>
           <p className="mt-3 text-text-secondary">
             Wir zeigen klar, welche Annahmen, Daten und Vereinfachungen im
-            Simulator stecken. Ziel ist Lernen, nicht Marketing.
+            Modell stecken. Ziel ist Lernen, nicht Marketing - inklusive
+            Grenzen der Uebertragbarkeit auf konkrete Einzelprojekte.
           </p>
         </FadeIn>
         <FadeIn delay={0.08} className="rounded-card bg-surface p-7 shadow-card">
@@ -47,7 +48,8 @@ export default function AboutPage() {
         <h2 className="text-3xl">Disclaimer</h2>
         <p className="mt-3 text-text-secondary">
           Dieses Projekt ist ein Educational Tool. Es stellt keine Finanz-,
-          Investitions- oder Handelsberatung dar.
+          Investitions- oder Handelsberatung dar und ersetzt keine
+          standortspezifische Netzanschlusspruefung.
         </p>
       </FadeIn>
     </div>

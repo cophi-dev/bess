@@ -58,6 +58,10 @@ OpenAutobidder-DE aims to demonstrate a Tesla Autobidder-inspired optimization s
    - API-First Architektur, rollenbasierte Dashboards
    - Feldnahe Integration fuer reale BESS-Portfolios
 
+## Public website (BESS Kompass)
+
+The Next.js app in `web/` is the public **BESS Kompass** experience (concepts and German market context first, then the open **OpenAutobidder-DE** model in Streamlit). Product name roles and IA live in `DESIGN.md`.
+
 ## Tech-Stack
 
 - Python 3.11+

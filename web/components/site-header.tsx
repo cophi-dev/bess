@@ -4,11 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
-  { href: "/", label: "Ueberblick" },
-  { href: "/tagesupdate", label: "Tagesupdate" },
+  { href: "/mission", label: "Mission" },
+  { href: "/wirtschaftlichkeit", label: "Wirtschaftlichkeit" },
+  { href: "/netzregulierung", label: "Netzregulierung" },
+  { href: "/daten", label: "Daten" },
+  { href: "/news", label: "News" },
   { href: "/simulator", label: "Simulator" },
-  { href: "/revenue-stacking", label: "Lernpfad" },
-  { href: "/resources", label: "Ressourcen" },
 ];
 
 export function SiteHeader() {
@@ -21,14 +22,14 @@ export function SiteHeader() {
           BESS Kompass
         </Link>
 
-        <nav className="hidden items-center gap-1 text-sm md:flex">
+        <nav className="hidden max-w-[min(100%,52rem)] flex-wrap items-center justify-end gap-0.5 text-sm lg:flex">
           {navItems.map((item) => {
             const active = pathname === item.href;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`rounded-card px-3 py-2 transition-colors ${
+                className={`rounded-card px-2.5 py-2 transition-colors lg:px-3 ${
                   active
                     ? "bg-primary/10 font-medium text-primary"
                     : "text-text-secondary hover:text-primary"
@@ -40,21 +41,38 @@ export function SiteHeader() {
           })}
         </nav>
 
-        <div className="hidden items-center md:flex">
+        <div className="hidden items-center lg:flex">
           <Link
-            href="/simulator"
+            href="/daten"
             className="rounded-card bg-primary px-4 py-2 text-sm font-medium text-white transition hover:bg-primary/90"
           >
-            Simulator starten
+            Live-Daten
           </Link>
         </div>
 
-        <Link
-          href="/tagesupdate"
-          className="rounded-card border border-primary/15 bg-surface px-3 py-2 text-xs font-medium text-primary transition hover:border-primary/40 md:hidden"
-        >
-          Tagesupdate
-        </Link>
+        <details className="group relative z-50 lg:hidden">
+          <summary className="list-none cursor-pointer rounded-card border border-primary/15 bg-surface px-3 py-2 text-xs font-medium text-primary transition hover:border-primary/40 [&::-webkit-details-marker]:hidden">
+            Menue
+          </summary>
+          <nav className="absolute right-0 top-full mt-1 flex min-w-[12rem] flex-col gap-0.5 rounded-card border border-primary/10 bg-surface/98 p-2 shadow-card backdrop-blur">
+            {navItems.map((item) => {
+              const active = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`rounded-md px-3 py-2 text-sm transition-colors ${
+                    active
+                      ? "bg-primary/10 font-medium text-primary"
+                      : "text-text-secondary hover:bg-background-alt hover:text-primary"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </details>
       </div>
     </header>
   );

@@ -16,6 +16,14 @@ This file is the single source of truth for all UI styling decisions.
 - **Feeling**: Warm, cosy, calm, and trustworthy
 - **Tone**: Premium but approachable — think modern serif typography with soft, natural colors
 
+## Web product and information architecture
+
+- **Public product name:** **BESS Kompass** — the education-first entry to how grid-scale storage earns money in Germany (revenue stacking, not just arbitrage).
+- **Engine / model name:** **OpenAutobidder-DE** — the open, inspectable simulator; use where technical credibility matters, not in every page title.
+- **Audience:** teams, students, and decision-makers who need to **evaluate** German BESS cases clearly.
+- **North star (first visit):** **learn first** — concepts and market context before the simulator. Typical path: start at `/` → `/revenue-stacking` and `/german-market` → `/simulator` to run the open model. `/tagesupdate` is the daily return habit.
+- **Main routes to keep consistent:** Ueberblick (`/`), Lernpfad (`/revenue-stacking`), Markt (`/german-market`), Tagesupdate (`/tagesupdate`), Ressourcen (`/resources`), Info (`/about`), Simulator (`/simulator`).
+
 ## Design Tokens
 
 ```yaml

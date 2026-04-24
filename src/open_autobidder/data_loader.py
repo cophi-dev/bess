@@ -49,11 +49,16 @@ def generate_synthetic_market_data(
     capacity_payment_eur_mw_h = np.full(periods, 1.6)
     congestion_bonus_eur_mwh = np.clip(12 + 15 * congestion_signal, 8, 30)
 
+    hours_arr = hours
+    system_load_mw = 50000.0 + 10000.0 * np.sin((hours_arr - 8.0) / 24.0 * 2.0 * np.pi) + rng.normal(0, 400, size=periods)
+    system_load_mw = np.clip(system_load_mw, 30000, None)
+
     return pd.DataFrame(
         {
             "timestamp": idx,
             "day_ahead_price_eur_mwh": day_ahead_price_eur_mwh,
             "wind_generation_mw": wind_generation_mw,
+            "system_load_mw": system_load_mw,
             "fcr_availability_eur_mw_h": fcr_availability_eur_mw_h,
             "afrr_availability_eur_mw_h": afrr_availability_eur_mw_h,
             "afrr_utilization_eur_mwh": afrr_utilization_eur_mwh,
@@ -121,6 +126,43 @@ class DataLoadResult:
     interval: str = "1h"
 
 
+def _ensure_system_load_mw(market_data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Ensure ``system_load_mw`` (total zone load, MW) exists; interpolate gaps after left-joins.
+
+    When the column is fully missing, use a diurnal template so offline tests and old caches
+    without load snapshots still get a displayable number.
+    """
+    out = market_data.copy()
+    if "system_load_mw" not in out.columns:
+        hours = out.index.hour
+        out["system_load_mw"] = 48000.0 + 10000.0 * np.sin((np.asarray(hours) - 9.0) / 24.0 * 2.0 * np.pi)
+    else:
+        out["system_load_mw"] = pd.to_numeric(out["system_load_mw"], errors="coerce")
+        if out["system_load_mw"].isna().any():
+            out["system_load_mw"] = out["system_load_mw"].interpolate(limit_direction="both")
+            if out["system_load_mw"].isna().any():
+                out["system_load_mw"] = out["system_load_mw"].ffill().bfill()
+        if out["system_load_mw"].isna().all():
+            hours = out.index.hour
+            out["system_load_mw"] = 48000.0 + 10000.0 * np.sin((np.asarray(hours) - 9.0) / 24.0 * 2.0 * np.pi)
+    return out
+
+
+def _merge_price_generation_load(
+    prices_df: pd.DataFrame, generation_df: pd.DataFrame, load_df: pd.DataFrame | None
+) -> pd.DataFrame:
+    """Inner-join price and generation, then left-join load when present; fill load gaps."""
+    merged = prices_df.join(generation_df, how="inner")
+    if load_df is not None and not load_df.empty:
+        common = merged.index.intersection(load_df.index)
+        if len(common) == 0:
+            # Time zones / grids misaligned: keep price+gen, synthesize load next.
+            return _ensure_system_load_mw(merged)
+        merged = merged.join(load_df, how="left")
+    return _ensure_system_load_mw(merged)
+
+
 def _ensure_revenue_stacking_columns(market_data: pd.DataFrame) -> pd.DataFrame:
     """Backfill optional stacking columns for sample/real datasets."""
     enriched = market_data.copy()
@@ -150,7 +192,7 @@ def _coerce_recent_window(market_data: pd.DataFrame, periods: int) -> pd.DataFra
 
 
 def _validate_market_data_frame(market_data: pd.DataFrame) -> None:
-    required = {"day_ahead_price_eur_mwh", "wind_generation_mw"}
+    required = {"day_ahead_price_eur_mwh", "wind_generation_mw", "system_load_mw"}
     missing = required.difference(market_data.columns)
     if missing:
         raise ValueError(f"Merged market data missing required columns: {sorted(missing)}")
@@ -160,7 +202,7 @@ def _validate_market_data_frame(market_data: pd.DataFrame) -> None:
         raise ValueError("Merged market data index must be DatetimeIndex.")
     if not market_data.index.is_monotonic_increasing:
         raise ValueError("Merged market data index must be monotonic increasing.")
-    if market_data[["day_ahead_price_eur_mwh", "wind_generation_mw"]].isna().any().any():
+    if market_data[["day_ahead_price_eur_mwh", "wind_generation_mw", "system_load_mw"]].isna().any().any():
         raise ValueError("Merged market data has nulls in required columns.")
 
 
@@ -193,7 +235,8 @@ def load_market_data(periods: int = 24) -> DataLoadResult:
 
     prices_df = datasets["prices"]  # type: ignore[index]
     generation_df = datasets["generation"]  # type: ignore[index]
-    merged = prices_df.join(generation_df, how="inner")
+    load_df: pd.DataFrame | None = datasets.get("load")  # type: ignore[union-attr]
+    merged = _merge_price_generation_load(prices_df, generation_df, load_df)
     try:
         _validate_market_data_frame(merged)
     except Exception as exc:
@@ -229,7 +272,11 @@ def load_market_data_for_mode(mode: Literal["sample", "real"] = "sample", period
     if mode == "sample":
         try:
             datasets = load_sample_data()
-            merged = datasets["prices"].join(datasets["generation"], how="inner")
+            merged = _merge_price_generation_load(
+                datasets["prices"],
+                datasets["generation"],
+                datasets.get("load"),
+            )
             _validate_market_data_frame(merged)
             merged = _ensure_revenue_stacking_columns(_coerce_recent_window(merged, periods=periods))
             return DataLoadResult(

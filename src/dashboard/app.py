@@ -65,6 +65,17 @@ I18N = {
         "update_caption": "Refresh local market data (for real mode when API access is configured).",
         "run_btn": "Run Optimization",
         "run_caption": "Run optimization and refresh KPIs, chart, and hourly table.",
+        "hero_header": "At a glance",
+        "hero_window": "Horizon: {days} day(s) — {steps} hourly steps in this run.",
+        "hero_installed": "Installed storage",
+        "hero_power_sub": "{mw:.1f} MW at selected C-rate",
+        "hero_zone_load": "Zone load (consumption proxy)",
+        "hero_zone_sub": "Mean {gw:.1f} GW",
+        "hero_bess_out": "Battery · discharged",
+        "hero_bess_in": "{mwh:,.0f} MWh charged in-window",
+        "hero_revenue": "Total revenue (gross)",
+        "load_caption": "ENTSO-E actual system load, DE-LU. Hourly when published at sub-hourly resolution.",
+        "kpi_economics_header": "Markets and economics",
         "kpi_header": "Key Indicators",
         "kpi_rev": "Total estimated revenue",
         "kpi_rev_help": "Expected gross revenue from all enabled streams across the selected horizon (before fees, taxes, and degradation costs).",
@@ -76,6 +87,13 @@ I18N = {
         "kpi_cycles_help": "Approximate full-cycle throughput over the horizon. 1.0 means throughput equivalent to one full charge + discharge cycle.",
         "kpi_power": "Configured max battery power",
         "kpi_power_help": "Maximum charge or discharge rate derived from capacity and selected C-rate.",
+        "scenario_label": "Extra storage to compare (MWh)",
+        "scenario_help": "Optional second run: same C-rate, capacity increased by this amount.",
+        "scenario_caption": "Larger pack scenario for sensitivity.",
+        "scenario_row_title": "Sensitivity vs larger pack",
+        "scenario_delta_rev": "Δ revenue",
+        "scenario_delta_dis": "Δ discharged",
+        "scenario_delta_cyc": "Δ equiv. cycles",
         "stacking_header": "Revenue Stacking Assumptions",
         "stacking_caption": "Simple educational assumptions for ancillary and capacity revenues.",
         "fcr_toggle": "Enable FCR availability",
@@ -154,6 +172,17 @@ I18N = {
         "update_caption": "Lokale Marktdaten aktualisieren (bei real-Modus und konfiguriertem API-Zugriff).",
         "run_btn": "Optimierung starten",
         "run_caption": "Optimierung ausfuehren und KPIs, Chart und Tabelle aktualisieren.",
+        "hero_header": "Auf einen Blick",
+        "hero_window": "Horizont: {days} Tag(e) — {steps} Stunden in diesem Lauf.",
+        "hero_installed": "Installierter Speicher",
+        "hero_power_sub": "{mw:.1f} MW bei gewaehlter C-Rate",
+        "hero_zone_load": "Zonenlast (Verbrauchs-Proxy)",
+        "hero_zone_sub": "Mittel {gw:.1f} GW",
+        "hero_bess_out": "Batterie · entladen",
+        "hero_bess_in": "{mwh:,.0f} MWh geladen im Fenster",
+        "hero_revenue": "Gesamterloes (brutto)",
+        "load_caption": "ENTSO-E tatsaechliche Systemlast, DE-LU. Stuendlich aggregiert, falls unterstuendig.",
+        "kpi_economics_header": "Markt und Wirtschaft",
         "kpi_header": "Kennzahlen",
         "kpi_rev": "Geschaetzter Gesamterloes",
         "kpi_rev_help": "Erwarteter Brutto-Gesamterloes aus allen aktivierten Erlosstroemen im gewaehlten Horizont (vor Gebuehren, Steuern und Degradationskosten).",
@@ -165,6 +194,13 @@ I18N = {
         "kpi_cycles_help": "Naeherungsweise Vollzyklus-Last im Horizont. 1,0 entspricht ungefaehr einem vollen Lade- plus Entladezyklus.",
         "kpi_power": "Konfigurierte Maximalleistung",
         "kpi_power_help": "Maximale Lade-/Entladeleistung aus Kapazitaet und gewaehlter C-Rate.",
+        "scenario_label": "Zusatz-Speicher zum Vergleich (MWh)",
+        "scenario_help": "Optionaler zweiter Lauf: gleiche C-Rate, Kapazitaet um diesen Wert erhoeht.",
+        "scenario_caption": "Groesserer Speicher: Sensitivitaet.",
+        "scenario_row_title": "Sensitivitaet vs. groesseres Pack",
+        "scenario_delta_rev": "Delta Erloes",
+        "scenario_delta_dis": "Delta Entladung",
+        "scenario_delta_cyc": "Delta Vollzyklen",
         "stacking_header": "Revenue-Stacking-Annahmen",
         "stacking_caption": "Einfache Lernannahmen fuer Regelenergie- und Verfuegbarkeitserloese.",
         "fcr_toggle": "FCR-Verfuegbarkeit aktivieren",
@@ -206,6 +242,56 @@ I18N = {
         "step_revenue": "Schritt-Erlos",
     },
 }
+
+
+def _hero_snapshot_html(
+    ui: dict[str, str],
+    *,
+    horizon_days: int,
+    n_steps: int,
+    capacity_mwh: float,
+    power_mw: float,
+    zone_load_mwh: float,
+    mean_gw: float,
+    discharged_mwh: float,
+    charged_mwh: float,
+    revenue_eur: float,
+) -> str:
+    return (
+        f"<p class='oa-hero-window'>{ui['hero_window'].format(days=horizon_days, steps=n_steps)}</p>"
+        "<div class='oa-hero-metric-row'>"
+        f"<div class='oa-hero-tile'><div class='oa-hero-k'>{ui['hero_installed']}</div>"
+        f"<div class='oa-hero-v'>{capacity_mwh:,.1f} MWh</div>"
+        f"<div class='oa-hero-s'>{ui['hero_power_sub'].format(mw=power_mw)}</div></div>"
+        f"<div class='oa-hero-tile'><div class='oa-hero-k'>{ui['hero_zone_load']}</div>"
+        f"<div class='oa-hero-v'>{zone_load_mwh:,.0f} MWh</div>"
+        f"<div class='oa-hero-s'>{ui['hero_zone_sub'].format(gw=mean_gw)}</div></div>"
+        f"<div class='oa-hero-tile'><div class='oa-hero-k'>{ui['hero_bess_out']}</div>"
+        f"<div class='oa-hero-v'>{discharged_mwh:,.1f} MWh</div>"
+        f"<div class='oa-hero-s'>{ui['hero_bess_in'].format(mwh=charged_mwh)}</div></div>"
+        f"<div class='oa-hero-tile'><div class='oa-hero-k'>{ui['hero_revenue']}</div>"
+        f"<div class='oa-hero-v'>{revenue_eur:,.0f} EUR</div></div>"
+        "</div>"
+    )
+
+
+def _scenario_delta_html(
+    ui: dict[str, str],
+    *,
+    extra_mwh: float,
+    delta_revenue: float,
+    delta_discharged: float,
+    delta_cycles: float,
+) -> str:
+    return (
+        f"<p class='oa-hero-window' style='font-weight:600'>{ui['scenario_row_title']} "
+        f"(+{extra_mwh:,.1f} MWh)</p>"
+        "<div class='oa-scenario-delta-row'>"
+        f"<span><strong>{ui['scenario_delta_rev']}</strong> {delta_revenue:+,.0f} EUR</span>"
+        f"<span><strong>{ui['scenario_delta_dis']}</strong> {delta_discharged:+,.1f} MWh</span>"
+        f"<span><strong>{ui['scenario_delta_cyc']}</strong> {delta_cycles:+.2f}</span>"
+        "</div>"
+    )
 
 
 def _build_dashboard_context(
@@ -316,6 +402,15 @@ def main() -> None:
         help=ui["data_mode_help"],
     )
     st.sidebar.caption(ui["data_mode_caption"])
+    extra_storage_mwh = st.sidebar.slider(
+        ui["scenario_label"],
+        min_value=0.0,
+        max_value=20.0,
+        value=0.0,
+        step=0.5,
+        help=ui["scenario_help"],
+    )
+    st.sidebar.caption(ui["scenario_caption"])
     st.sidebar.markdown(f"##### {ui['stacking_header']}")
     st.sidebar.caption(ui["stacking_caption"])
     enable_fcr = st.sidebar.toggle(ui["fcr_toggle"], value=True)
@@ -342,7 +437,9 @@ def main() -> None:
     if update_clicked:
         try:
             paths = update_local_data(days=max(horizon_days, 2))
-            st.sidebar.success(f"Updated data: {paths['prices'].name}, {paths['generation'].name}")
+            st.sidebar.success(
+                f"Updated: {paths['prices'].name}, {paths['generation'].name}, {paths['load'].name}"
+            )
         except Exception as exc:
             st.sidebar.warning(f"Live data update failed. Using cached/sample data. Details: {exc}")
 
@@ -351,12 +448,23 @@ def main() -> None:
         st.session_state.market_data = None
         st.session_state.load_result = None
         st.session_state.optimization_signature = None
+    if "optimization_result_scenario" not in st.session_state:
+        st.session_state.optimization_result_scenario = None
+
+    stacking_cfg = RevenueStackingConfig(
+        enable_fcr=enable_fcr,
+        enable_afrr=enable_afrr,
+        enable_capacity_payment=enable_capacity_payment,
+        enable_congestion_bonus=enable_congestion_bonus,
+        capacity_contract_share_of_power=capacity_share,
+    )
 
     optimization_signature = (
         capacity_mwh,
         power_ratio,
         horizon_days,
         data_mode,
+        extra_storage_mwh,
         enable_fcr,
         enable_afrr,
         enable_capacity_payment,
@@ -386,22 +494,31 @@ def main() -> None:
         result = optimize_bess_with_stacking(
             market_data=market_data,
             bess=bess,
-            stacking=RevenueStackingConfig(
-                enable_fcr=enable_fcr,
-                enable_afrr=enable_afrr,
-                enable_capacity_payment=enable_capacity_payment,
-                enable_congestion_bonus=enable_congestion_bonus,
-                capacity_contract_share_of_power=capacity_share,
-            ),
+            stacking=stacking_cfg,
         )
         st.session_state.optimization_result = result
         st.session_state.market_data = market_data
         st.session_state.load_result = load_result
         st.session_state.optimization_signature = optimization_signature
+        if extra_storage_mwh > 1e-6:
+            cap2 = capacity_mwh + extra_storage_mwh
+            bess_sc = BESSConfig(
+                capacity_mwh=cap2,
+                power_mw=cap2 * power_ratio,
+            )
+            st.session_state.optimization_result_scenario = optimize_bess_with_stacking(
+                market_data=market_data,
+                bess=bess_sc,
+                stacking=stacking_cfg,
+            )
+        else:
+            st.session_state.optimization_result_scenario = None
     else:
         load_result = st.session_state.load_result
         market_data = st.session_state.market_data
         result = st.session_state.optimization_result
+
+    result_scenario = st.session_state.optimization_result_scenario
 
     source_label_map = {
         "cached": "Local ENTSO-E cache",
@@ -420,8 +537,42 @@ def main() -> None:
     dispatch = result.dispatch
     revenue_breakdown = result.revenue_breakdown_eur or {"arbitrage": result.total_revenue_eur}
 
+    dt_h = float(bess.timestep_hours)
+    zone_load_mwh = float((market_data["system_load_mw"] * dt_h).sum())
+    mean_gw = float(market_data["system_load_mw"].mean()) / 1000.0
+    n_steps = len(market_data)
+
     st.markdown("<div class='oa-section-spacer'></div>", unsafe_allow_html=True)
-    st.subheader(ui["kpi_header"])
+    st.subheader(ui["hero_header"])
+    st.markdown(
+        _hero_snapshot_html(
+            ui,
+            horizon_days=horizon_days,
+            n_steps=n_steps,
+            capacity_mwh=capacity_mwh,
+            power_mw=power_mw,
+            zone_load_mwh=zone_load_mwh,
+            mean_gw=mean_gw,
+            discharged_mwh=result.discharged_energy_mwh,
+            charged_mwh=result.charged_energy_mwh,
+            revenue_eur=result.total_revenue_eur,
+        ),
+        unsafe_allow_html=True,
+    )
+    st.caption(ui["load_caption"])
+    if result_scenario is not None and extra_storage_mwh > 1e-6:
+        st.markdown(
+            _scenario_delta_html(
+                ui,
+                extra_mwh=extra_storage_mwh,
+                delta_revenue=result_scenario.total_revenue_eur - result.total_revenue_eur,
+                delta_discharged=result_scenario.discharged_energy_mwh - result.discharged_energy_mwh,
+                delta_cycles=result_scenario.estimated_cycles - result.estimated_cycles,
+            ),
+            unsafe_allow_html=True,
+        )
+
+    st.subheader(ui["kpi_economics_header"])
     col1, col2, col3, col4, col5 = st.columns(5)
     col1.metric(
         ui["kpi_rev"],

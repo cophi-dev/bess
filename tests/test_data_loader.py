@@ -5,15 +5,16 @@ import pandas as pd
 from open_autobidder import data_loader
 
 
-def _base_frames() -> tuple[pd.DataFrame, pd.DataFrame]:
+def _base_frames() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     idx = pd.date_range("2026-01-01", periods=4, freq="1h", tz="Europe/Brussels")
     prices = pd.DataFrame({"day_ahead_price_eur_mwh": [50.0, 60.0, 70.0, 80.0]}, index=idx)
     generation = pd.DataFrame({"wind_generation_mw": [1200.0, 1300.0, 1100.0, 1000.0]}, index=idx)
-    return prices, generation
+    load = pd.DataFrame({"system_load_mw": [50000.0, 51000.0, 52000.0, 53000.0]}, index=idx)
+    return prices, generation, load
 
 
 def test_load_market_data_uses_cached_metadata(monkeypatch) -> None:
-    prices, generation = _base_frames()
+    prices, generation, load = _base_frames()
 
     monkeypatch.setattr(
         data_loader,
@@ -21,6 +22,7 @@ def test_load_market_data_uses_cached_metadata(monkeypatch) -> None:
         lambda fallback_to_sample=True: {
             "prices": prices,
             "generation": generation,
+            "load": load,
             "metadata": {"market_zone": "DE_LU", "interval": "1h", "source": "cached"},
         },
     )
@@ -55,3 +57,9 @@ def test_real_mode_handles_ingestion_failure_with_fallback(monkeypatch) -> None:
     result = data_loader.load_market_data_for_mode(mode="real", periods=24)
     assert result.source == "synthetic"
     assert result.warning is not None
+
+
+def test_sample_mode_includes_system_load() -> None:
+    result = data_loader.load_market_data_for_mode(mode="sample", periods=5)
+    assert "system_load_mw" in result.market_data.columns
+    assert not result.market_data["system_load_mw"].isna().any()

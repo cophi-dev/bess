@@ -19,15 +19,15 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   metadataBase: new URL("https://bess-pi.vercel.app"),
   title: {
-    default: "OpenAutobidder-DE | BESS Revenue Stacking verstehen",
-    template: "%s | OpenAutobidder-DE",
+    default: "BESS Kompass | Revenue Stacking im deutschen Strommarkt",
+    template: "%s | BESS Kompass",
   },
   description:
-    "Die Bildungsplattform fuer Batteriespeicher in Deutschland: Revenue Stacking mit Arbitrage, FCR, aFRR, Kapazitaet und Netzengpass-Boni.",
+    "BESS Kompass erklaert, wie Grossspeicher in Deutschland wirtschaftlich und netzbewusst gedacht werden: Revenue Stacking, Standortwirkung und Systemdienstleistungen. Offenes Modell: OpenAutobidder-DE.",
   openGraph: {
-    title: "OpenAutobidder-DE",
+    title: "BESS Kompass",
     description:
-      "Wie Batteriespeicher in Deutschland wirklich Geld verdienen - jenseits reiner Arbitrage.",
+      "Lernen mit Marktlogik und Standortwirkung zuerst: Wie Batteriespeicher in Deutschland jenseits reiner Arbitrage bewertet werden. OpenAutobidder-DE als transparentes Modell.",
     type: "website",
     locale: "de_DE",
   },

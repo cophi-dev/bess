@@ -271,6 +271,61 @@ def apply_design_theme(theme_mode: str = "warm") -> None:
                 margin-bottom: 1.1rem;
             }}
 
+            .oa-hero-metric-row {{
+                display: flex;
+                flex-wrap: wrap;
+                gap: 1.05rem;
+                margin: 0.2rem 0 1.6rem 0;
+            }}
+            .oa-hero-tile {{
+                flex: 1 1 200px;
+                min-width: 160px;
+                background: var(--oa-card-background);
+                border: 1px solid var(--oa-card-border);
+                border-radius: 18px;
+                padding: 1.25rem 1.4rem 1.35rem 1.4rem;
+                box-shadow: 0 8px 22px rgba(52, 42, 26, 0.06);
+            }}
+            .oa-hero-tile .oa-hero-k {{
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                font-size: 0.72rem;
+                font-weight: 600;
+                color: var(--oa-text-secondary);
+            }}
+            .oa-hero-tile .oa-hero-v {{
+                margin-top: 0.5rem;
+                font-family: "Playfair Display", Georgia, serif;
+                font-size: clamp(1.75rem, 2.5vw, 2.5rem);
+                font-weight: 600;
+                color: var(--oa-primary);
+                line-height: 1.1;
+            }}
+            .oa-hero-tile .oa-hero-s {{
+                margin-top: 0.4rem;
+                font-size: 0.88rem;
+                color: var(--oa-text-secondary);
+            }}
+            .oa-scenario-delta-row {{
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.75rem 1.5rem;
+                margin: -0.4rem 0 1.2rem 0;
+                padding: 0.9rem 1.1rem;
+                border-radius: 14px;
+                background: color-mix(in srgb, var(--oa-highlight) 10%, var(--oa-card-background));
+                border: 1px solid var(--oa-card-border);
+                font-size: 0.95rem;
+            }}
+            .oa-scenario-delta-row span {{
+                color: var(--oa-text);
+            }}
+            .oa-hero-window {{
+                margin: 0.1rem 0 0.5rem 0;
+                color: var(--oa-text-secondary);
+                font-size: 0.92rem;
+            }}
+
             .oa-hero-chart-intro {{
                 margin-top: 2.8rem;
                 margin-bottom: 0.7rem;

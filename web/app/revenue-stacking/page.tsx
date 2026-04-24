@@ -4,7 +4,7 @@ import { FadeIn } from "@/components/fade-in";
 export const metadata: Metadata = {
   title: "Revenue Stacking",
   description:
-    "Arbitrage, FCR, aFRR, Kapazitaet und Netzengpass-Boni klar erklaert.",
+    "Arbitrage, Systemdienstleistungen und Betriebsmuster klar erklaert - inklusive Wirkung auf Netzdienlichkeit.",
 };
 
 const streams = [
@@ -37,7 +37,8 @@ export default function RevenueStackingPage() {
         <h1 className="text-4xl md:text-5xl">Revenue Stacking verstehen</h1>
         <p className="mt-4 text-lg text-text-secondary">
           Erfolgreiche BESS-Projekte in Deutschland kombinieren mehrere
-          Erlosstroeme. Diese Seite zeigt die Bausteine in einfacher Sprache.
+          Erlosstroeme. Diese Seite zeigt die Bausteine und typische
+          Betriebsmuster in einfacher Sprache.
         </p>
       </FadeIn>
 
@@ -85,6 +86,29 @@ export default function RevenueStackingPage() {
             </div>
           </div>
         </div>
+      </FadeIn>
+
+      <FadeIn delay={0.24} className="mt-8 rounded-card bg-surface p-8 shadow-card">
+        <h2 className="text-3xl">Typisches Betriebsmuster im Tagesverlauf</h2>
+        <p className="mt-3 text-text-secondary">
+          In vielen Marktphasen werden Batterien um PV-Mittagsstunden geladen
+          und in Morgen- bzw. Abendspitzen entladen. Das erhoeht den Wert aus
+          Preis-Spreads, kann aber je nach Standort unterschiedlich auf
+          Engpaesse wirken.
+        </p>
+      </FadeIn>
+
+      <FadeIn delay={0.28} className="mt-8 rounded-card bg-background-alt p-8">
+        <h2 className="text-3xl">Wann Value Stack nicht netzdienlich wird</h2>
+        <ul className="mt-4 space-y-3 text-text-secondary">
+          <li>- Wenn viele Speicher regional gebuendelt identische Signale verfolgen.</li>
+          <li>- Wenn Einspeisung aus Batterien zeitgleich mit bereits hoher Windlast auf Engpassachsen trifft.</li>
+          <li>- Wenn Marktanreize ohne lokale Netzsignale gefahren werden.</li>
+        </ul>
+        <p className="mt-4 text-sm text-text-secondary">
+          Deshalb betrachten wir Revenue Stacking immer zusammen mit
+          Standortlogik und Systemwirkung - nicht isoliert.
+        </p>
       </FadeIn>
     </div>
   );

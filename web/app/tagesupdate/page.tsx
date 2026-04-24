@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { DailyBriefingView } from "@/components/daily-briefing-view";
 
 export const metadata: Metadata = {
-  title: "Tagesupdate",
-  description: "Taegliches BESS-Briefing mit Lektion, News und Insights fuer Deutschland.",
+  title: "Daten",
+  description:
+    "Echtzeitdaten und zentrale Key Metrics fuer den deutschen BESS-Markt im taeglichen Ueberblick.",
 };
 
 export default function TagesupdatePage() {

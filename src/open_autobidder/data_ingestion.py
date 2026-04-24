@@ -8,6 +8,7 @@ import os
 from datetime import UTC, datetime
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import typer
 from entsoe import EntsoePandasClient
@@ -21,6 +22,7 @@ PROCESSED_DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "processed"
 SAMPLE_DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "sample"
 SAMPLE_PRICES_PATH = SAMPLE_DATA_DIR / "prices_sample.csv"
 SAMPLE_GENERATION_PATH = SAMPLE_DATA_DIR / "generation_sample.csv"
+SAMPLE_LOAD_PATH = SAMPLE_DATA_DIR / "load_sample.csv"
 
 
 def _get_entsoe_client() -> EntsoePandasClient:
@@ -125,6 +127,46 @@ def fetch_recent_generation(days: int = 7, market_zone: str = "DE_LU") -> pd.Dat
     return generation_df
 
 
+def _aggregate_load_to_hourly_mw(load_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Resample system load to hourly mean (MW) so it aligns with day-ahead hourly prices.
+
+    ENTSO-E actual load is often 15-minute; we use one value per hour for the merge.
+    """
+    if load_df.empty:
+        raise ValueError("load response is empty.")
+    if isinstance(load_df.columns, pd.MultiIndex):
+        load_df = load_df.copy()
+        load_df.columns = ["_".join(str(p) for p in c if p) for c in load_df.columns]
+    if len(load_df.columns) == 1:
+        load_series = load_df.iloc[:, 0].astype(float)
+    else:
+        load_series = load_df.astype(float).sum(axis=1, min_count=1)
+    hourly = load_series.to_frame(name="system_load_mw")
+    hourly = hourly.resample("1h", label="right", closed="right").mean()
+    hourly = _standardize_index(hourly)
+    if hourly["system_load_mw"].isna().any():
+        hourly["system_load_mw"] = hourly["system_load_mw"].interpolate(limit_direction="both")
+    _validate_expected_columns(hourly, {"system_load_mw"}, "load")
+    return hourly
+
+
+def fetch_recent_load(days: int = 7, market_zone: str = "DE_LU") -> pd.DataFrame:
+    """
+    Fetch total actual system load for the bidding zone from ENTSO-E.
+
+    Returns a dataframe indexed by timestamp (hourly) with column:
+    - system_load_mw
+    """
+    client = _get_entsoe_client()
+    start, end = _time_window(days=days)
+    load_df = client.query_load(country_code=_normalize_market_zone(market_zone), start=start, end=end)
+    if isinstance(load_df, pd.Series):
+        load_df = load_df.to_frame(name="system_load_mw")
+    load_df = _standardize_index(load_df)
+    return _aggregate_load_to_hourly_mw(load_df)
+
+
 def _save_snapshot(df: pd.DataFrame, dataset_name: str, timestamp_utc: datetime, metadata: dict[str, str]) -> Path:
     PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
     stamp = timestamp_utc.strftime("%Y%m%dT%H%M%SZ")
@@ -143,6 +185,13 @@ def _latest_file(pattern: str) -> Path:
             "Run `python -m open_autobidder.data_ingestion update` first."
         )
     return candidates[0]
+
+
+def _optional_latest_file(pattern: str) -> Path | None:
+    try:
+        return _latest_file(pattern)
+    except FileNotFoundError:
+        return None
 
 
 def _read_frame(path: Path) -> pd.DataFrame:
@@ -168,12 +217,13 @@ def _load_snapshot_metadata(parquet_path: Path) -> dict[str, str]:
 
 def update_local_data(days: int = 7, runtime_config: DataRuntimeConfig | None = None) -> dict[str, Path]:
     """
-    Download recent ENTSO-E prices/generation and cache snapshots as Parquet.
+    Download recent ENTSO-E prices, generation, and system load; cache snapshots as Parquet.
     """
     runtime = runtime_config or load_data_runtime_config()
     fetched_at = datetime.now(UTC)
     prices_df = fetch_recent_prices(days=days, market_zone=runtime.market_zone)
     generation_df = fetch_recent_generation(days=days, market_zone=runtime.market_zone)
+    load_df = fetch_recent_load(days=days, market_zone=runtime.market_zone)
 
     snapshot_metadata = {
         "market_zone": runtime.market_zone,
@@ -183,10 +233,21 @@ def update_local_data(days: int = 7, runtime_config: DataRuntimeConfig | None = 
 
     prices_path = _save_snapshot(prices_df, "prices", fetched_at, metadata=snapshot_metadata)
     generation_path = _save_snapshot(generation_df, "generation", fetched_at, metadata=snapshot_metadata)
+    load_path = _save_snapshot(load_df, "load", fetched_at, metadata=snapshot_metadata)
 
     LOGGER.info("Saved prices to %s", prices_path)
     LOGGER.info("Saved generation to %s", generation_path)
-    return {"prices": prices_path, "generation": generation_path}
+    LOGGER.info("Saved load to %s", load_path)
+    return {"prices": prices_path, "generation": generation_path, "load": load_path}
+
+
+def _sample_load_from_prices_timestamps(prices: pd.DataFrame) -> pd.DataFrame:
+    """Hourly placeholder load (MW) aligned to sample price index when no load file exists."""
+    idx = prices.index
+    hours = idx.hour
+    # Stylized diurnal load (~45–70 GW) in megawatts
+    base = 48000.0 + 10000.0 * np.sin((np.asarray(hours) - 9.0) / 24.0 * 2.0 * np.pi)
+    return pd.DataFrame({"system_load_mw": base}, index=idx)
 
 
 def load_sample_data() -> dict[str, pd.DataFrame]:
@@ -198,18 +259,26 @@ def load_sample_data() -> dict[str, pd.DataFrame]:
             "Sample dataset is missing. Expected files: "
             f"`{SAMPLE_PRICES_PATH}` and `{SAMPLE_GENERATION_PATH}`."
         )
-    return {
-        "prices": _read_frame(SAMPLE_PRICES_PATH),
+    prices = _read_frame(SAMPLE_PRICES_PATH)
+    out: dict[str, pd.DataFrame] = {
+        "prices": prices,
         "generation": _read_frame(SAMPLE_GENERATION_PATH),
     }
+    if SAMPLE_LOAD_PATH.exists():
+        out["load"] = _read_frame(SAMPLE_LOAD_PATH)
+    else:
+        out["load"] = _sample_load_from_prices_timestamps(prices)
+    return out
 
 
 def load_latest_data(fallback_to_sample: bool = True) -> dict[str, pd.DataFrame | dict[str, str]]:
     """
-    Load the most recent cached prices/generation data.
+    Load the most recent cached prices, generation, and (when present) system load.
 
     If no cached snapshots are available and ``fallback_to_sample`` is true,
-    checked-in sample CSV data is returned.
+    checked-in sample CSV data is returned. Older installs may have only
+    ``prices`` and ``generation`` parquet; ``load`` is then omitted and the
+    data loader backfills a synthetic load column.
     """
     try:
         latest_prices = _latest_file("prices_*.parquet")
@@ -218,18 +287,25 @@ def load_latest_data(fallback_to_sample: bool = True) -> dict[str, pd.DataFrame 
         if fallback_to_sample:
             sample = load_sample_data()
             runtime = load_data_runtime_config()
+            meta = {
+                "market_zone": runtime.market_zone,
+                "interval": runtime.interval,
+                "source": "sample",
+            }
+            if "load" in sample:
+                meta["load_path"] = str(SAMPLE_LOAD_PATH) if SAMPLE_LOAD_PATH.exists() else "synthetic"
             return {
                 "prices": sample["prices"],
                 "generation": sample["generation"],
-                "metadata": {
-                    "market_zone": runtime.market_zone,
-                    "interval": runtime.interval,
-                    "source": "sample",
-                },
+                "load": sample["load"],
+                "metadata": meta,
             }
         raise
 
-    metadata = _load_snapshot_metadata(latest_prices) or _load_snapshot_metadata(latest_generation)
+    latest_load = _optional_latest_file("load_*.parquet")
+    metadata = _load_snapshot_metadata(latest_prices) or _load_snapshot_metadata(latest_generation) or (
+        _load_snapshot_metadata(latest_load) if latest_load else {}
+    )
     runtime = load_data_runtime_config()
     metadata = {
         "market_zone": metadata.get("market_zone", runtime.market_zone),
@@ -238,22 +314,30 @@ def load_latest_data(fallback_to_sample: bool = True) -> dict[str, pd.DataFrame 
         "prices_path": str(latest_prices),
         "generation_path": str(latest_generation),
     }
-    return {
+    if latest_load:
+        metadata["load_path"] = str(latest_load)
+    out: dict[str, pd.DataFrame | dict[str, str]] = {
         "prices": _read_frame(latest_prices),
         "generation": _read_frame(latest_generation),
-        "metadata": metadata,
+        "metadata": metadata,  # type: ignore[dict-item]
     }
+    if latest_load is not None:
+        out["load"] = _read_frame(latest_load)  # type: ignore[assignment]
+    return out
 
 
 def latest_data_timestamp() -> datetime | None:
     """
     Return UTC timestamp of the newest cached snapshot, if available.
     """
-    try:
-        latest_prices = _latest_file("prices_*.parquet")
-    except FileNotFoundError:
+    mts: list[float] = []
+    for pattern in ("prices_*.parquet", "generation_*.parquet", "load_*.parquet"):
+        p = _optional_latest_file(pattern)
+        if p is not None:
+            mts.append(p.stat().st_mtime)
+    if not mts:
         return None
-    return datetime.fromtimestamp(latest_prices.stat().st_mtime, tz=UTC)
+    return datetime.fromtimestamp(max(mts), tz=UTC)
 
 
 @APP.callback()
@@ -274,6 +358,7 @@ def update_command(
 
     typer.echo(f"Saved prices: {paths['prices']}")
     typer.echo(f"Saved generation: {paths['generation']}")
+    typer.echo(f"Saved load: {paths['load']}")
 
 
 def main() -> None:
