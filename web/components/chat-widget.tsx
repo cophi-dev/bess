@@ -18,20 +18,38 @@ const quickPrompts = [
   "Welche Rolle spielen Netzengpaesse?",
 ];
 
-function ChatHeader({ onClose }: { onClose: () => void }) {
+function ChatHeader({
+  isFullscreen,
+  onClose,
+  onToggleFullscreen,
+}: {
+  isFullscreen: boolean;
+  onClose: () => void;
+  onToggleFullscreen: () => void;
+}) {
   return (
     <div className="flex items-center justify-between border-b border-primary/10 px-5 py-4">
       <p className="flex items-center gap-2 font-medium text-primary">
         <span className="inline-flex h-2.5 w-2.5 rounded-full bg-accent" />
         AI Lernassistent
       </p>
-      <button
-        type="button"
-        onClick={onClose}
-        className="rounded-card px-2 py-1 text-xs text-text-secondary transition hover:bg-background-alt hover:text-text"
-      >
-        Schliessen
-      </button>
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={onToggleFullscreen}
+          className="hidden rounded-card px-2 py-1 text-xs text-text-secondary transition hover:bg-background-alt hover:text-text md:inline-flex"
+          aria-label={isFullscreen ? "Vollbild verlassen" : "Vollbild"}
+        >
+          {isFullscreen ? "Fenster" : "Vollbild"}
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-card px-2 py-1 text-xs text-text-secondary transition hover:bg-background-alt hover:text-text"
+        >
+          Schliessen
+        </button>
+      </div>
     </div>
   );
 }
@@ -114,6 +132,7 @@ function ChatComposer({
   onPickPrompt,
   onSubmit,
   question,
+  showQuickPrompts,
   textareaRef,
 }: {
   error: string | null;
@@ -122,6 +141,7 @@ function ChatComposer({
   onPickPrompt: (prompt: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   question: string;
+  showQuickPrompts: boolean;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
 }) {
   const onTextareaKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -144,18 +164,20 @@ function ChatComposer({
         className="min-h-24 w-full rounded-card border border-primary/20 bg-background px-3 py-2 text-sm leading-relaxed outline-none transition focus:border-primary"
         placeholder="Frage zu BESS Revenue Stacking..."
       />
-      <div className="flex flex-wrap gap-2">
-        {quickPrompts.map((prompt) => (
-          <button
-            key={prompt}
-            type="button"
-            onClick={() => onPickPrompt(prompt)}
-            className="rounded-card border border-primary/15 bg-background px-2.5 py-1 text-xs text-primary transition hover:border-primary/35"
-          >
-            {prompt}
-          </button>
-        ))}
-      </div>
+      {showQuickPrompts ? (
+        <div className="flex flex-wrap gap-2">
+          {quickPrompts.map((prompt) => (
+            <button
+              key={prompt}
+              type="button"
+              onClick={() => onPickPrompt(prompt)}
+              className="rounded-card border border-primary/15 bg-background px-2.5 py-1 text-xs text-primary transition hover:border-primary/35"
+            >
+              {prompt}
+            </button>
+          ))}
+        </div>
+      ) : null}
       {error ? <p className="text-xs text-error">{error}</p> : null}
       <button
         type="submit"
@@ -170,6 +192,7 @@ function ChatComposer({
 
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [question, setQuestion] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -189,6 +212,11 @@ export function ChatWidget() {
   );
   const messageViewportRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const hasUserMessage = useMemo(
+    () => messages.some((message) => message.role === "user"),
+    [messages],
+  );
+  const showQuickPrompts = !hasUserMessage;
 
   useEffect(() => {
     const handlePrefillEvent = (event: Event) => {
@@ -208,7 +236,12 @@ export function ChatWidget() {
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 767px)");
-    const update = () => setIsMobileViewport(media.matches);
+    const update = () => {
+      setIsMobileViewport(media.matches);
+      if (media.matches) {
+        setIsFullscreen(false);
+      }
+    };
     update();
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
@@ -308,13 +341,19 @@ export function ChatWidget() {
     void askQuestion(question);
   }
 
+  const panelClassName = isMobileViewport
+    ? "absolute inset-3 flex min-h-0 flex-col overflow-hidden rounded-card border border-primary/15 bg-surface shadow-[0_12px_30px_rgba(46,74,62,0.16)]"
+    : isFullscreen
+      ? "fixed inset-5 flex min-h-0 flex-col overflow-hidden rounded-card border border-primary/15 bg-surface shadow-[0_12px_30px_rgba(46,74,62,0.16)]"
+      : "fixed right-0 top-16 flex h-[calc(100vh-4rem)] w-[460px] min-h-0 flex-col overflow-hidden border-l border-primary/15 bg-surface shadow-[-8px_0_24px_rgba(46,74,62,0.12)]";
+
   return (
     <div
       data-chat-widget-root="true"
       className="fixed bottom-4 right-4 z-[60] md:bottom-7 md:right-7"
     >
       {isOpen ? (
-        <div className="fixed inset-0 z-[65] md:inset-auto md:bottom-24 md:right-7 md:w-[min(92vw,520px)]">
+        <div className="fixed inset-0 z-[65]">
           <div
             className="absolute inset-0 bg-[rgba(44,44,44,0.28)] md:hidden"
             onClick={() => setIsOpen(false)}
@@ -324,9 +363,13 @@ export function ChatWidget() {
             role="dialog"
             aria-modal="true"
             aria-label="AI Lernassistent"
-            className="absolute inset-3 flex min-h-0 flex-col overflow-hidden rounded-card border border-primary/15 bg-surface shadow-[0_12px_30px_rgba(46,74,62,0.16)] md:inset-auto md:relative md:h-[min(78vh,680px)]"
+            className={panelClassName}
           >
-            <ChatHeader onClose={() => setIsOpen(false)} />
+            <ChatHeader
+              isFullscreen={isFullscreen}
+              onClose={() => setIsOpen(false)}
+              onToggleFullscreen={() => setIsFullscreen((prev) => !prev)}
+            />
             <ChatMessageList
               isLoading={isLoading}
               messages={messages}
@@ -339,6 +382,7 @@ export function ChatWidget() {
               onPickPrompt={setQuestion}
               onSubmit={onSubmit}
               question={question}
+              showQuickPrompts={showQuickPrompts}
               textareaRef={textareaRef}
             />
           </section>
@@ -350,7 +394,7 @@ export function ChatWidget() {
         onClick={() => setIsOpen((prev) => !prev)}
         className={`relative flex h-14 w-14 items-center justify-center rounded-full border text-sm font-semibold text-primary shadow-card transition hover:scale-[1.02] ${
           isOpen ? "border-primary/40 bg-background-alt" : "border-primary/20 bg-accent"
-        }`}
+        } ${isOpen && !isMobileViewport ? "md:hidden" : ""}`}
         aria-label={isOpen ? "AI Chat schliessen" : "AI Chat oeffnen"}
       >
         AI

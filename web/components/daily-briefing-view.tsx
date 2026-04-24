@@ -77,39 +77,39 @@ export function DailyBriefingView() {
   }, [loadBriefing]);
 
   return (
-    <div className="container-shell py-16 md:py-20">
+    <div className="container-shell py-12 md:py-14">
       <FadeIn className="max-w-3xl">
         <p className="text-sm font-medium uppercase tracking-[0.18em] text-accent">
           Tagesupdate Deutschland
         </p>
-        <h1 className="mt-4 text-4xl md:text-5xl">Lektion zuerst, Tagesthemen auf einen Blick</h1>
-        <p className="mt-4 text-lg text-text-secondary">
-          Ein kompaktes Tagesformat mit Lernteil, den wichtigsten Marktthemen und regulatorischer Einordnung.
+        <h1 className="mt-3 text-3xl leading-tight md:text-[2.6rem]">Tagesupdate auf einen Blick</h1>
+        <p className="mt-3 text-base text-text-secondary md:text-lg">
+          Kurz, klar, relevant.
         </p>
-        <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-text-secondary">
-          <span>
-            Datum:{" "}
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs md:text-sm text-text-secondary">
+          <span className="inline-flex items-center gap-1">
+            <span>Stand</span>
             <strong className="text-text">{briefing?.date || "wird geladen ..."}</strong>
           </span>
-          <span className="hidden md:inline">•</span>
-          <span>
-            Aktualisiert am{" "}
+          <span className="h-3 w-px bg-primary/15" aria-hidden="true" />
+          <span className="inline-flex items-center gap-1">
+            <span>Update</span>
             <strong className="text-text">{updatedAt || "wird geladen ..."}</strong>
           </span>
-          <span className="hidden md:inline">•</span>
-          <span>
-            Quelle{" "}
+          <span className="h-3 w-px bg-primary/15" aria-hidden="true" />
+          <span className="inline-flex items-center gap-1">
+            <span>Status</span>
             <strong className="text-text">
-              {isCachedResult === null ? "wird geladen ..." : isCachedResult ? "Cache (6h)" : "Neu generiert"}
+              {isCachedResult === null ? "wird geladen ..." : isCachedResult ? "Cache" : "Live"}
             </strong>
           </span>
         </div>
-        <div className="mt-6">
+        <div className="mt-4">
           <button
             type="button"
             onClick={() => void loadBriefing({ usePost: true })}
             disabled={loading || refreshing}
-            className="rounded-card border border-primary/15 bg-surface px-5 py-2 text-sm font-medium text-primary transition hover:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-card border border-primary/15 bg-background-alt px-4 py-1.5 text-xs font-medium text-primary transition hover:border-primary/30 hover:bg-surface disabled:cursor-not-allowed disabled:opacity-60 md:text-sm"
           >
             {refreshing ? "Wird neu generiert ..." : "Jetzt neu generieren"}
           </button>
@@ -117,20 +117,20 @@ export function DailyBriefingView() {
       </FadeIn>
 
       {loading && (
-        <FadeIn delay={0.05} className="mt-10 rounded-card bg-surface p-7 shadow-card">
+        <FadeIn delay={0.05} className="mt-8 rounded-card bg-surface p-7 shadow-card">
           <p className="text-text-secondary">Das Tagesbriefing wird geladen ...</p>
         </FadeIn>
       )}
 
       {error && (
-        <FadeIn delay={0.05} className="mt-10 rounded-card border border-error/30 bg-surface p-7 shadow-card">
+        <FadeIn delay={0.05} className="mt-8 rounded-card border border-error/30 bg-surface p-7 shadow-card">
           <p className="text-error">{error}</p>
         </FadeIn>
       )}
 
       {briefing && !loading && !error && (
         <>
-          <section className="mt-10 rounded-card bg-background-alt p-8 shadow-card">
+          <section className="mt-8 rounded-card bg-background-alt p-8 shadow-card">
             <p className="text-sm font-medium uppercase tracking-[0.14em] text-accent">Lektion</p>
             <h2 className="mt-3 text-3xl md:text-4xl">{briefing.lesson.title}</h2>
             <div className="mt-5 space-y-4 text-base leading-relaxed text-text-secondary md:text-lg">

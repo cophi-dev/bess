@@ -18,7 +18,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 border-b border-primary/10 bg-background/95 backdrop-blur">
       <div className="container-shell flex h-16 items-center justify-between gap-4">
         <Link href="/" className="truncate text-base font-semibold tracking-tight text-primary md:text-lg">
-          OpenAutobidder-DE
+          BESS Kompass
         </Link>
 
         <nav className="hidden items-center gap-1 text-sm md:flex">
