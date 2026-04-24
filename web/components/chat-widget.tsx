@@ -87,9 +87,12 @@ export function ChatWidget() {
   return (
     <div className="fixed bottom-5 right-5 z-[60] md:bottom-7 md:right-7">
       {isOpen ? (
-        <div className="mb-3 w-[min(92vw,420px)] rounded-card border border-primary/15 bg-surface p-4 shadow-card">
+        <div className="mb-3 w-[min(92vw,420px)] rounded-card border border-primary/30 bg-surface p-4 shadow-[0_10px_28px_rgba(46,74,62,0.2)] ring-1 ring-accent/45">
           <div className="mb-3 flex items-center justify-between">
-            <p className="font-medium text-primary">AI Lernassistent</p>
+            <p className="flex items-center gap-2 font-medium text-primary">
+              <span className="inline-flex h-2.5 w-2.5 rounded-full bg-accent shadow-[0_0_0_4px_rgba(201,168,108,0.24)]" />
+              AI Lernassistent
+            </p>
             <button
               type="button"
               onClick={() => setIsOpen(false)}
@@ -164,7 +167,7 @@ export function ChatWidget() {
             <textarea
               value={question}
               onChange={(event) => setQuestion(event.target.value)}
-              className="min-h-20 w-full rounded-card border border-primary/20 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              className="min-h-20 w-full rounded-card border border-primary/25 bg-background px-3 py-2 text-base outline-none focus:border-primary md:text-sm"
               placeholder="Frage zu BESS Revenue Stacking..."
             />
             <div className="flex flex-wrap gap-2">
@@ -194,9 +197,16 @@ export function ChatWidget() {
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="flex h-14 w-14 items-center justify-center rounded-full border border-primary/20 bg-accent text-2xl text-primary shadow-card transition hover:scale-[1.02]"
+        className={`relative flex h-14 w-14 items-center justify-center rounded-full border text-2xl text-primary shadow-card transition hover:scale-[1.02] ${
+          isOpen
+            ? "border-accent/80 bg-accent ring-4 ring-accent/35"
+            : "border-primary/20 bg-accent"
+        }`}
         aria-label="AI Chat oeffnen"
       >
+        {isOpen ? (
+          <span className="pointer-events-none absolute inset-0 rounded-full border border-accent/70 animate-pulse" />
+        ) : null}
         💬
       </button>
     </div>
