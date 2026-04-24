@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -144,7 +144,7 @@ function ChatComposer({
   showQuickPrompts: boolean;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
 }) {
-  const onTextareaKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+  const onTextareaKeyDown = (event: ReactKeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       const form = event.currentTarget.form;
@@ -284,7 +284,7 @@ export function ChatWidget() {
   }, [isLoading, messages]);
 
   useEffect(() => {
-    const onEscape = (event: KeyboardEvent) => {
+    const onEscape = (event: globalThis.KeyboardEvent) => {
       if (event.key === "Escape") setIsOpen(false);
     };
     window.addEventListener("keydown", onEscape);
