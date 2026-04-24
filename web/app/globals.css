@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #f9f6f0;
+  color: #2c2c2c;
+}
+
+body {
+  font-family: var(--font-inter), Inter, system-ui, -apple-system, sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-playfair), "Playfair Display", Georgia, serif;
+}
+
+.container-shell {
+  @apply mx-auto w-full max-w-content px-5 md:px-8;
+}

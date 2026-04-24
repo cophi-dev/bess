@@ -1,0 +1,4 @@
+Always read and follow `DESIGN.md` before generating or changing UI.
+Apply these rules to frontend components, pages, chart configuration, theme files, and styles.
+If design guidance conflicts with accessibility or product requirements, prioritize accessibility and requirements, then document the tradeoff in your response.
+Reference `DESIGN.md` whenever implementing UI-related code.
