@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from .data_ingestion import load_latest_data, load_sample_data, latest_data_timestamp
+from .config import load_data_runtime_config
 
 DataFrequency = Literal["1h"]
 
@@ -116,6 +117,8 @@ class DataLoadResult:
     source: str
     last_updated: datetime | None
     warning: str | None = None
+    market_zone: str = "DE_LU"
+    interval: str = "1h"
 
 
 def _ensure_revenue_stacking_columns(market_data: pd.DataFrame) -> pd.DataFrame:
@@ -146,6 +149,21 @@ def _coerce_recent_window(market_data: pd.DataFrame, periods: int) -> pd.DataFra
     return market_data.tail(periods)
 
 
+def _validate_market_data_frame(market_data: pd.DataFrame) -> None:
+    required = {"day_ahead_price_eur_mwh", "wind_generation_mw"}
+    missing = required.difference(market_data.columns)
+    if missing:
+        raise ValueError(f"Merged market data missing required columns: {sorted(missing)}")
+    if market_data.empty:
+        raise ValueError("Merged market data is empty.")
+    if not isinstance(market_data.index, pd.DatetimeIndex):
+        raise ValueError("Merged market data index must be DatetimeIndex.")
+    if not market_data.index.is_monotonic_increasing:
+        raise ValueError("Merged market data index must be monotonic increasing.")
+    if market_data[["day_ahead_price_eur_mwh", "wind_generation_mw"]].isna().any().any():
+        raise ValueError("Merged market data has nulls in required columns.")
+
+
 def load_market_data(periods: int = 24) -> DataLoadResult:
     """
     Load merged price + generation data.
@@ -155,9 +173,11 @@ def load_market_data(periods: int = 24) -> DataLoadResult:
     2) Checked-in sample dataset in ``data/processed/*_sample.csv``
     3) Synthetic fallback if local files are unavailable/corrupt
     """
+    runtime = load_data_runtime_config()
     try:
         datasets = load_latest_data(fallback_to_sample=True)
-        source = "cached" if latest_data_timestamp() else "sample"
+        metadata = datasets.get("metadata", {}) if isinstance(datasets, dict) else {}
+        source = str(metadata.get("source", "cached" if latest_data_timestamp() else "sample"))
         warning = None
         updated_at = latest_data_timestamp()
     except Exception as exc:
@@ -167,18 +187,24 @@ def load_market_data(periods: int = 24) -> DataLoadResult:
             source="synthetic",
             last_updated=None,
             warning=f"Falling back to synthetic data because local data load failed: {exc}",
+            market_zone=runtime.market_zone,
+            interval=runtime.interval,
         )
 
-    prices_df = datasets["prices"]
-    generation_df = datasets["generation"]
+    prices_df = datasets["prices"]  # type: ignore[index]
+    generation_df = datasets["generation"]  # type: ignore[index]
     merged = prices_df.join(generation_df, how="inner")
-    if merged.empty:
+    try:
+        _validate_market_data_frame(merged)
+    except Exception as exc:
         market_data = generate_synthetic_market_data(periods=periods)
         return DataLoadResult(
             market_data=market_data,
             source="synthetic",
             last_updated=None,
-            warning="Merged local dataset was empty; using synthetic fallback.",
+            warning=f"Merged local dataset invalid; using synthetic fallback: {exc}",
+            market_zone=runtime.market_zone,
+            interval=runtime.interval,
         )
 
     merged = _ensure_revenue_stacking_columns(_coerce_recent_window(merged, periods=periods))
@@ -187,6 +213,8 @@ def load_market_data(periods: int = 24) -> DataLoadResult:
         source=source,
         last_updated=updated_at,
         warning=warning,
+        market_zone=str(metadata.get("market_zone", runtime.market_zone)),
+        interval=str(metadata.get("interval", runtime.interval)),
     )
 
 
@@ -197,14 +225,20 @@ def load_market_data_for_mode(mode: Literal["sample", "real"] = "sample", period
     - ``sample`` (default): always uses checked-in sample files first.
     - ``real``: uses latest cached ENTSO-E snapshots with sample/synthetic fallback.
     """
+    runtime = load_data_runtime_config()
     if mode == "sample":
         try:
             datasets = load_sample_data()
             merged = datasets["prices"].join(datasets["generation"], how="inner")
-            if merged.empty:
-                raise ValueError("Sample dataset merge produced no rows.")
+            _validate_market_data_frame(merged)
             merged = _ensure_revenue_stacking_columns(_coerce_recent_window(merged, periods=periods))
-            return DataLoadResult(market_data=merged, source="sample", last_updated=None)
+            return DataLoadResult(
+                market_data=merged,
+                source="sample",
+                last_updated=None,
+                market_zone=runtime.market_zone,
+                interval=runtime.interval,
+            )
         except Exception as exc:
             market_data = generate_synthetic_market_data(periods=periods)
             return DataLoadResult(
@@ -212,6 +246,8 @@ def load_market_data_for_mode(mode: Literal["sample", "real"] = "sample", period
                 source="synthetic",
                 last_updated=None,
                 warning=f"Sample data unavailable; using synthetic fallback: {exc}",
+                market_zone=runtime.market_zone,
+                interval=runtime.interval,
             )
 
     return load_market_data(periods=periods)

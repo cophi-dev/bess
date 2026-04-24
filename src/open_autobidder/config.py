@@ -1,6 +1,7 @@
-"""Configuration models for BESS and optimization runs."""
+"""Configuration models for BESS, runtime, and optimization runs."""
 
 from __future__ import annotations
+import os
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -59,3 +60,34 @@ class RunConfig(BaseModel):
     default_afrr_availability_eur_mw_h: float = Field(default=3.0, ge=0)
     default_afrr_utilization_eur_mwh: float = Field(default=35.0, ge=0)
     default_capacity_payment_eur_mw_h: float = Field(default=1.6, ge=0)
+
+
+class DataRuntimeConfig(BaseModel):
+    """Runtime data settings loaded from environment with safe defaults."""
+
+    market_zone: str = Field(default="DE_LU", min_length=2)
+    interval: str = Field(default="1h")
+
+    @field_validator("market_zone")
+    @classmethod
+    def validate_market_zone(cls, v: str) -> str:
+        normalized = v.strip().upper().replace("-", "_")
+        if not normalized:
+            raise ValueError("market_zone must not be empty.")
+        return normalized
+
+    @field_validator("interval")
+    @classmethod
+    def validate_interval(cls, v: str) -> str:
+        normalized = v.strip().lower()
+        if normalized not in {"1h"}:
+            raise ValueError("Only hourly interval `1h` is supported in this MVP.")
+        return normalized
+
+
+def load_data_runtime_config() -> DataRuntimeConfig:
+    """Load data runtime config from environment variables."""
+    return DataRuntimeConfig(
+        market_zone=os.getenv("OPENAUTOBIDDER_MARKET_ZONE", "DE_LU"),
+        interval=os.getenv("OPENAUTOBIDDER_MARKET_INTERVAL", "1h"),
+    )

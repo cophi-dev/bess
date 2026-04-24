@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 from datetime import UTC, datetime
@@ -11,9 +12,10 @@ import pandas as pd
 import typer
 from entsoe import EntsoePandasClient
 
+from .config import DataRuntimeConfig, load_data_runtime_config
+
 LOGGER = logging.getLogger(__name__)
 APP = typer.Typer(help="ENTSO-E data ingestion CLI for OpenAutobidder-DE.")
-COUNTRY_CODE = "DE_LU"
 ENTSOE_TOKEN_ENV = "ENTSOE_API_TOKEN"
 PROCESSED_DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "processed"
 SAMPLE_DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "sample"
@@ -44,8 +46,18 @@ def _standardize_index(df: pd.DataFrame) -> pd.DataFrame:
     if df.index.tz is None:
         df.index = df.index.tz_localize("Europe/Brussels")
     df = df.sort_index()
+    if not df.index.is_monotonic_increasing:
+        raise ValueError("Timestamp index must be monotonic increasing after sort.")
     df.index.name = "timestamp"
     return df
+
+
+def _validate_expected_columns(df: pd.DataFrame, required_columns: set[str], dataset_name: str) -> None:
+    missing = required_columns.difference(df.columns)
+    if missing:
+        raise ValueError(f"{dataset_name} response missing required columns: {sorted(missing)}")
+    if df.empty:
+        raise ValueError(f"{dataset_name} response is empty.")
 
 
 def _select_generation_columns(generation_df: pd.DataFrame) -> pd.DataFrame:
@@ -75,7 +87,11 @@ def _select_generation_columns(generation_df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(selected, index=generation_df.index)
 
 
-def fetch_recent_prices(days: int = 7) -> pd.DataFrame:
+def _normalize_market_zone(market_zone: str) -> str:
+    return market_zone.strip().upper().replace("-", "_")
+
+
+def fetch_recent_prices(days: int = 7, market_zone: str = "DE_LU") -> pd.DataFrame:
     """
     Fetch day-ahead prices for Germany (DE-LU bidding zone) from ENTSO-E.
 
@@ -84,12 +100,14 @@ def fetch_recent_prices(days: int = 7) -> pd.DataFrame:
     """
     client = _get_entsoe_client()
     start, end = _time_window(days=days)
-    series = client.query_day_ahead_prices(country_code=COUNTRY_CODE, start=start, end=end)
+    series = client.query_day_ahead_prices(country_code=_normalize_market_zone(market_zone), start=start, end=end)
     prices_df = series.to_frame(name="day_ahead_price_eur_mwh")
-    return _standardize_index(prices_df)
+    prices_df = _standardize_index(prices_df)
+    _validate_expected_columns(prices_df, {"day_ahead_price_eur_mwh"}, "prices")
+    return prices_df
 
 
-def fetch_recent_generation(days: int = 7) -> pd.DataFrame:
+def fetch_recent_generation(days: int = 7, market_zone: str = "DE_LU") -> pd.DataFrame:
     """
     Fetch wind and solar generation for Germany (DE-LU bidding zone) from ENTSO-E.
 
@@ -99,17 +117,21 @@ def fetch_recent_generation(days: int = 7) -> pd.DataFrame:
     """
     client = _get_entsoe_client()
     start, end = _time_window(days=days)
-    raw_generation = client.query_generation(country_code=COUNTRY_CODE, start=start, end=end)
+    raw_generation = client.query_generation(country_code=_normalize_market_zone(market_zone), start=start, end=end)
     generation_df = raw_generation.to_frame() if isinstance(raw_generation, pd.Series) else raw_generation
     generation_df = _standardize_index(generation_df)
-    return _select_generation_columns(generation_df)
+    generation_df = _select_generation_columns(generation_df)
+    _validate_expected_columns(generation_df, {"wind_generation_mw", "solar_generation_mw"}, "generation")
+    return generation_df
 
 
-def _save_snapshot(df: pd.DataFrame, dataset_name: str, timestamp_utc: datetime) -> Path:
+def _save_snapshot(df: pd.DataFrame, dataset_name: str, timestamp_utc: datetime, metadata: dict[str, str]) -> Path:
     PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
     stamp = timestamp_utc.strftime("%Y%m%dT%H%M%SZ")
     output_path = PROCESSED_DATA_DIR / f"{dataset_name}_{stamp}.parquet"
     df.to_parquet(output_path)
+    meta_path = PROCESSED_DATA_DIR / f"{dataset_name}_{stamp}.meta.json"
+    meta_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
     return output_path
 
 
@@ -131,16 +153,36 @@ def _read_frame(path: Path) -> pd.DataFrame:
     return _standardize_index(frame)
 
 
-def update_local_data(days: int = 7) -> dict[str, Path]:
+def _load_snapshot_metadata(parquet_path: Path) -> dict[str, str]:
+    meta_path = parquet_path.with_suffix(".meta.json")
+    if not meta_path.exists():
+        return {}
+    try:
+        raw = json.loads(meta_path.read_text(encoding="utf-8"))
+        if not isinstance(raw, dict):
+            return {}
+        return {str(k): str(v) for k, v in raw.items()}
+    except Exception:
+        return {}
+
+
+def update_local_data(days: int = 7, runtime_config: DataRuntimeConfig | None = None) -> dict[str, Path]:
     """
     Download recent ENTSO-E prices/generation and cache snapshots as Parquet.
     """
+    runtime = runtime_config or load_data_runtime_config()
     fetched_at = datetime.now(UTC)
-    prices_df = fetch_recent_prices(days=days)
-    generation_df = fetch_recent_generation(days=days)
+    prices_df = fetch_recent_prices(days=days, market_zone=runtime.market_zone)
+    generation_df = fetch_recent_generation(days=days, market_zone=runtime.market_zone)
 
-    prices_path = _save_snapshot(prices_df, "prices", fetched_at)
-    generation_path = _save_snapshot(generation_df, "generation", fetched_at)
+    snapshot_metadata = {
+        "market_zone": runtime.market_zone,
+        "interval": runtime.interval,
+        "fetched_at_utc": fetched_at.isoformat(),
+    }
+
+    prices_path = _save_snapshot(prices_df, "prices", fetched_at, metadata=snapshot_metadata)
+    generation_path = _save_snapshot(generation_df, "generation", fetched_at, metadata=snapshot_metadata)
 
     LOGGER.info("Saved prices to %s", prices_path)
     LOGGER.info("Saved generation to %s", generation_path)
@@ -162,7 +204,7 @@ def load_sample_data() -> dict[str, pd.DataFrame]:
     }
 
 
-def load_latest_data(fallback_to_sample: bool = True) -> dict[str, pd.DataFrame]:
+def load_latest_data(fallback_to_sample: bool = True) -> dict[str, pd.DataFrame | dict[str, str]]:
     """
     Load the most recent cached prices/generation data.
 
@@ -174,12 +216,32 @@ def load_latest_data(fallback_to_sample: bool = True) -> dict[str, pd.DataFrame]
         latest_generation = _latest_file("generation_*.parquet")
     except FileNotFoundError:
         if fallback_to_sample:
-            return load_sample_data()
+            sample = load_sample_data()
+            runtime = load_data_runtime_config()
+            return {
+                "prices": sample["prices"],
+                "generation": sample["generation"],
+                "metadata": {
+                    "market_zone": runtime.market_zone,
+                    "interval": runtime.interval,
+                    "source": "sample",
+                },
+            }
         raise
 
+    metadata = _load_snapshot_metadata(latest_prices) or _load_snapshot_metadata(latest_generation)
+    runtime = load_data_runtime_config()
+    metadata = {
+        "market_zone": metadata.get("market_zone", runtime.market_zone),
+        "interval": metadata.get("interval", runtime.interval),
+        "source": "cached",
+        "prices_path": str(latest_prices),
+        "generation_path": str(latest_generation),
+    }
     return {
         "prices": _read_frame(latest_prices),
         "generation": _read_frame(latest_generation),
+        "metadata": metadata,
     }
 
 

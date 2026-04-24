@@ -6,7 +6,7 @@ OpenAutobidder-DE is an open-source optimization engine for Battery Energy Stora
 
 ## Current Status
 
-**Waiting for ENTSO-E API key - using sample data for now.**
+**ENTSO-E integration is implemented. Live mode activates when `ENTSOE_API_TOKEN` is set; otherwise the app uses sample/fallback data.**
 
 The project is fully runnable with a bundled 7-day German sample dataset in `data/sample/` (day-ahead prices + wind/solar generation). Real ENTSO-E ingestion is already implemented and can be enabled as soon as the API token is available.
 
@@ -138,6 +138,13 @@ OpenAutobidder-DE now supports automatic market data ingestion from the ENTSO-E 
 export ENTSOE_API_TOKEN="your_token_here"
 ```
 
+Optional runtime scope (MVP defaults shown):
+
+```bash
+export OPENAUTOBIDDER_MARKET_ZONE="DE_LU"
+export OPENAUTOBIDDER_MARKET_INTERVAL="1h"
+```
+
 ### 2) Update local market data
 
 Fetch and cache the latest day-ahead prices plus wind/solar generation:
@@ -163,6 +170,8 @@ If ENTSO-E is unavailable (no key, API outage, network issue), the app falls bac
 3. Synthetic fallback data (last resort)
 
 This keeps the dashboard and optimizer usable out of the box.
+
+The dashboard also surfaces data provenance (source mode, configured market scope, and fallback context).
 
 ### 4) Future automation plans
 

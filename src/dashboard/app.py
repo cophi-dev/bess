@@ -409,13 +409,14 @@ def main() -> None:
         "synthetic": "Synthetic fallback",
     }
     source_label = source_label_map.get(load_result.source, load_result.source)
+    zone_interval = f"{load_result.market_zone} @ {load_result.interval}"
     if load_result.last_updated:
         updated_local = load_result.last_updated.astimezone(UTC).strftime("%Y-%m-%d %H:%M UTC")
-        st.caption(f"Data source: {source_label} | Last update: {updated_local}")
+        st.caption(f"Data source: {source_label} | Scope: {zone_interval} | Last update: {updated_local}")
     else:
-        st.caption(f"Data source: {source_label} | Last update: not available")
+        st.caption(f"Data source: {source_label} | Scope: {zone_interval} | Last update: not available")
     if load_result.warning:
-        st.warning(load_result.warning)
+        st.warning(f"Fallback context: {load_result.warning}")
     dispatch = result.dispatch
     revenue_breakdown = result.revenue_breakdown_eur or {"arbitrage": result.total_revenue_eur}
 
