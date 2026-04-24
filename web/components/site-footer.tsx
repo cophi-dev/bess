@@ -28,7 +28,7 @@ export function SiteFooter() {
           <p className="font-semibold text-text">Projekt</p>
           <div className="mt-2 flex flex-col gap-2 text-sm text-text-secondary">
             <a
-              href="https://github.com/"
+              href="https://github.com/cophi-dev/bess"
               target="_blank"
               rel="noreferrer"
               className="hover:text-primary"

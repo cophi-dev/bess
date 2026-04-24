@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
     },
-    sitemap: "https://openautobidder.de/sitemap.xml",
+    sitemap: "https://bess-pi.vercel.app/sitemap.xml",
   };
 }

@@ -15,7 +15,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://openautobidder.de"),
+  metadataBase: new URL("https://bess-pi.vercel.app"),
   title: {
     default: "OpenAutobidder-DE | BESS Revenue Stacking verstehen",
     template: "%s | OpenAutobidder-DE",

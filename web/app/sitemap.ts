@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = "https://openautobidder.de";
+  const base = "https://bess-pi.vercel.app";
   const routes = [
     "",
     "/simulator",

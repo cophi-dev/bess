@@ -33,7 +33,7 @@ export default function AboutPage() {
             Dokumentation und didaktische Inhalte.
           </p>
           <a
-            href="https://github.com/"
+            href="https://github.com/cophi-dev/bess"
             target="_blank"
             rel="noreferrer"
             className="mt-4 inline-block text-primary hover:underline"

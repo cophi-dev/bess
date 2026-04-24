@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FadeIn } from "@/components/fade-in";
+import { HomeAiChat } from "@/components/home-ai-chat";
 
 const valueCards = [
   {
@@ -31,7 +32,7 @@ export default function HomePage() {
     name: "OpenAutobidder-DE",
     description:
       "Bildungsplattform zu Revenue Stacking fuer Batteriespeicher im deutschen Strommarkt.",
-    url: "https://openautobidder.de",
+    url: "https://bess-pi.vercel.app",
   };
 
   return (
@@ -109,6 +110,8 @@ export default function HomePage() {
           </FadeIn>
         </div>
       </section>
+
+      <HomeAiChat />
     </div>
   );
 }

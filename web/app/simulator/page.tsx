@@ -33,7 +33,7 @@ export default function SimulatorPage() {
             </p>
           </div>
           <a
-            href="https://example.com/openautobidder-simulator"
+            href="https://bess-pi.streamlit.app"
             target="_blank"
             rel="noreferrer"
             className="inline-flex w-fit rounded-card bg-primary px-6 py-3 font-medium text-white transition hover:bg-primary/90"
