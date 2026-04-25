@@ -1,7 +1,5 @@
-export const metadata = {
-  title: "Daten",
-  description:
-    "Echtzeitdaten und zentrale Kennzahlen fuer den deutschen BESS-Markt im taeglichen Ueberblick.",
-};
+import { permanentRedirect } from "next/navigation";
 
-export { default } from "../tagesupdate/page";
+export default function DatenRedirectPage() {
+  permanentRedirect("/data");
+}

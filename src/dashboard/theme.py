@@ -326,6 +326,183 @@ def apply_design_theme(theme_mode: str = "warm") -> None:
                 font-size: 0.92rem;
             }}
 
+            .oa-vnb-section {{
+                margin: 2.2rem 0 1.8rem 0;
+                padding: 1.45rem;
+                background: var(--oa-card-background);
+                border: 1px solid var(--oa-card-border);
+                border-radius: 20px;
+                box-shadow: var(--oa-shadow);
+            }}
+
+            .oa-vnb-kicker,
+            .oa-vnb-axis-card p,
+            .oa-vnb-run p,
+            .oa-vnb-cell p,
+            .oa-vnb-axis-horizontal,
+            .oa-vnb-axis-vertical {{
+                text-transform: uppercase;
+                letter-spacing: 0.12em;
+                font-size: 0.72rem;
+                font-weight: 700;
+            }}
+
+            .oa-vnb-kicker {{
+                color: var(--oa-primary);
+                margin: 0 0 0.45rem 0;
+            }}
+
+            .oa-vnb-section h2 {{
+                margin: 0;
+                color: var(--oa-primary);
+                font-size: clamp(1.75rem, 2.25vw, 2.35rem);
+            }}
+
+            .oa-vnb-intro {{
+                max-width: 78ch;
+                margin: 0.8rem 0 0 0;
+                color: var(--oa-text-secondary);
+            }}
+
+            .oa-vnb-axis-grid {{
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 0.95rem;
+                margin-top: 1.2rem;
+            }}
+
+            .oa-vnb-run,
+            .oa-vnb-axis-card {{
+                border-radius: 16px;
+                border: 1px solid var(--oa-card-border);
+                background: color-mix(in srgb, var(--oa-secondary) 72%, var(--oa-card-background));
+                padding: 1rem;
+            }}
+
+            .oa-vnb-run p,
+            .oa-vnb-axis-card p {{
+                margin: 0 0 0.45rem 0;
+                color: var(--oa-accent);
+            }}
+
+            .oa-vnb-axis-card h3 {{
+                margin: 0;
+                color: var(--oa-primary);
+                font-size: 1.25rem;
+            }}
+
+            .oa-vnb-run span,
+            .oa-vnb-axis-card span,
+            .oa-vnb-cell span {{
+                color: var(--oa-text-secondary);
+                font-size: 0.92rem;
+                line-height: 1.6;
+            }}
+
+            .oa-vnb-matrix-shell {{
+                display: grid;
+                grid-template-columns: 2.2rem 1fr;
+                gap: 0.75rem;
+                align-items: stretch;
+                margin-top: 1.15rem;
+            }}
+
+            .oa-vnb-axis-vertical {{
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--oa-text-secondary);
+                writing-mode: vertical-rl;
+                transform: rotate(180deg);
+            }}
+
+            .oa-vnb-matrix {{
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 0.75rem;
+            }}
+
+            .oa-vnb-cell {{
+                min-height: 10.5rem;
+                border-radius: 16px;
+                padding: 1rem;
+                border: 1px solid color-mix(in srgb, var(--oa-card-border) 72%, transparent);
+            }}
+
+            .oa-vnb-cell p {{
+                margin: 0 0 0.45rem 0;
+            }}
+
+            .oa-vnb-cell h3 {{
+                margin: 0 0 0.5rem 0;
+                font-size: 1.25rem;
+                line-height: 1.25;
+            }}
+
+            .oa-vnb-cell-primary {{
+                background: var(--oa-primary);
+                color: #FFFFFF;
+            }}
+
+            .oa-vnb-cell-primary h3,
+            .oa-vnb-cell-primary p,
+            .oa-vnb-cell-primary span {{
+                color: #FFFFFF !important;
+            }}
+
+            .oa-vnb-cell-warning {{
+                background: color-mix(in srgb, var(--oa-accent) 25%, var(--oa-card-background));
+            }}
+
+            .oa-vnb-cell-highlight {{
+                background: color-mix(in srgb, var(--oa-highlight) 25%, var(--oa-card-background));
+            }}
+
+            .oa-vnb-cell-muted {{
+                background: var(--oa-secondary);
+            }}
+
+            .oa-vnb-axis-horizontal {{
+                grid-column: 1 / -1;
+                margin: 0.15rem 0 0 0;
+                text-align: center;
+                color: var(--oa-text-secondary);
+            }}
+
+            .oa-vnb-checklist {{
+                margin-top: 1.15rem;
+                border-radius: 16px;
+                border: 1px solid color-mix(in srgb, var(--oa-accent) 35%, var(--oa-card-border));
+                background: color-mix(in srgb, var(--oa-card-background) 88%, var(--oa-secondary));
+                padding: 1rem 1.15rem;
+            }}
+
+            .oa-vnb-checklist h3 {{
+                margin: 0;
+                color: var(--oa-primary);
+                font-size: 1.35rem;
+            }}
+
+            .oa-vnb-checklist ol {{
+                margin: 0.75rem 0 0 1.25rem;
+                padding: 0;
+                color: var(--oa-text-secondary);
+            }}
+
+            .oa-vnb-checklist li {{
+                margin-top: 0.45rem;
+                color: var(--oa-text-secondary);
+            }}
+
+            .oa-vnb-checklist p {{
+                margin: 0.95rem 0 0 0;
+                padding: 0.8rem 0.9rem;
+                border-radius: 12px;
+                background: var(--oa-secondary);
+                color: var(--oa-primary);
+                font-weight: 600;
+            }}
+
             .oa-hero-chart-intro {{
                 margin-top: 2.8rem;
                 margin-bottom: 0.7rem;
@@ -355,6 +532,21 @@ def apply_design_theme(theme_mode: str = "warm") -> None:
                 div[data-testid="stMainBlockContainer"] {{
                     padding-left: 1.8rem;
                     padding-right: 1.8rem;
+                }}
+            }}
+
+            @media (max-width: 900px) {{
+                .oa-vnb-axis-grid,
+                .oa-vnb-matrix {{
+                    grid-template-columns: 1fr;
+                }}
+
+                .oa-vnb-matrix-shell {{
+                    grid-template-columns: 1fr;
+                }}
+
+                .oa-vnb-axis-vertical {{
+                    display: none;
                 }}
             }}
         </style>

@@ -63,3 +63,21 @@ def test_sample_mode_includes_system_load() -> None:
     result = data_loader.load_market_data_for_mode(mode="sample", periods=5)
     assert "system_load_mw" in result.market_data.columns
     assert not result.market_data["system_load_mw"].isna().any()
+
+
+def test_revenue_stacking_backfill_derives_congestion_signal() -> None:
+    idx = pd.date_range("2026-01-01", periods=5, freq="1h", tz="Europe/Brussels")
+    frame = pd.DataFrame(
+        {
+            "day_ahead_price_eur_mwh": [50.0, 45.0, 40.0, 70.0, 80.0],
+            "wind_generation_mw": [1000.0, 1400.0, 1800.0, 3500.0, 4200.0],
+            "system_load_mw": [52000.0, 51000.0, 50000.0, 49000.0, 48000.0],
+        },
+        index=idx,
+    )
+
+    enriched = data_loader._ensure_revenue_stacking_columns(frame)
+    assert enriched.attrs["congestion_signal_source"] == "derived_wind_load"
+    assert "congestion_signal" in enriched.columns
+    assert enriched["congestion_signal"].between(0.0, 1.0).all()
+    assert enriched["congestion_signal"].max() > 0.0

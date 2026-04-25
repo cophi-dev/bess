@@ -53,7 +53,7 @@ def generate_synthetic_market_data(
     system_load_mw = 50000.0 + 10000.0 * np.sin((hours_arr - 8.0) / 24.0 * 2.0 * np.pi) + rng.normal(0, 400, size=periods)
     system_load_mw = np.clip(system_load_mw, 30000, None)
 
-    return pd.DataFrame(
+    out = pd.DataFrame(
         {
             "timestamp": idx,
             "day_ahead_price_eur_mwh": day_ahead_price_eur_mwh,
@@ -68,6 +68,8 @@ def generate_synthetic_market_data(
             "congestion_bonus_eur_mwh": congestion_bonus_eur_mwh,
         }
     ).set_index("timestamp")
+    out.attrs["congestion_signal_source"] = "synthetic_profile"
+    return out
 
 
 def load_smard_data(
@@ -124,6 +126,7 @@ class DataLoadResult:
     warning: str | None = None
     market_zone: str = "DE_LU"
     interval: str = "1h"
+    congestion_signal_source: str = "unknown"
 
 
 def _ensure_system_load_mw(market_data: pd.DataFrame) -> pd.DataFrame:
@@ -163,6 +166,38 @@ def _merge_price_generation_load(
     return _ensure_system_load_mw(merged)
 
 
+def _derive_congestion_signal(market_data: pd.DataFrame) -> pd.Series:
+    """Build an educational wind/load congestion proxy from available hourly data."""
+    wind = pd.to_numeric(market_data["wind_generation_mw"], errors="coerce").fillna(0.0)
+    solar = (
+        pd.to_numeric(market_data["solar_generation_mw"], errors="coerce").fillna(0.0)
+        if "solar_generation_mw" in market_data.columns
+        else 0.0
+    )
+    load = pd.to_numeric(market_data["system_load_mw"], errors="coerce").replace(0.0, np.nan)
+    renewable_pressure = ((wind + solar) / load).replace([np.inf, -np.inf], np.nan)
+    if renewable_pressure.isna().all():
+        renewable_pressure = wind / max(float(wind.quantile(0.95)), 1.0)
+    renewable_pressure = renewable_pressure.fillna(renewable_pressure.median()).fillna(0.0)
+    threshold = float(renewable_pressure.quantile(0.65))
+    high = float(renewable_pressure.quantile(0.95))
+    scale = max(high - threshold, 1e-9)
+    return ((renewable_pressure - threshold) / scale).clip(0.0, 1.0)
+
+
+def _ensure_congestion_signal(market_data: pd.DataFrame) -> tuple[pd.DataFrame, str]:
+    """Use provided congestion data when present; otherwise derive a transparent proxy."""
+    enriched = market_data.copy()
+    if "congestion_signal" in enriched.columns:
+        provided = pd.to_numeric(enriched["congestion_signal"], errors="coerce")
+        if provided.notna().any() and float(provided.fillna(0.0).abs().max()) > 0.0:
+            enriched["congestion_signal"] = provided.fillna(0.0).clip(0.0, 1.0)
+            return enriched, str(enriched.attrs.get("congestion_signal_source", "provided"))
+
+    enriched["congestion_signal"] = _derive_congestion_signal(enriched)
+    return enriched, "derived_wind_load"
+
+
 def _ensure_revenue_stacking_columns(market_data: pd.DataFrame) -> pd.DataFrame:
     """Backfill optional stacking columns for sample/real datasets."""
     enriched = market_data.copy()
@@ -172,14 +207,15 @@ def _ensure_revenue_stacking_columns(market_data: pd.DataFrame) -> pd.DataFrame:
         "afrr_utilization_eur_mwh": 35.0,
         "afrr_activation_ratio": 0.2,
         "capacity_payment_eur_mw_h": 1.6,
-        "congestion_signal": 0.0,
         "congestion_bonus_eur_mwh": 10.0,
     }
     for column, default_value in defaults.items():
         if column not in enriched.columns:
             enriched[column] = default_value
+    enriched, congestion_signal_source = _ensure_congestion_signal(enriched)
     enriched["afrr_activation_ratio"] = enriched["afrr_activation_ratio"].clip(0.0, 1.0)
     enriched["congestion_signal"] = enriched["congestion_signal"].clip(0.0, 1.0)
+    enriched.attrs["congestion_signal_source"] = congestion_signal_source
     return enriched
 
 
@@ -231,6 +267,7 @@ def load_market_data(periods: int = 24) -> DataLoadResult:
             warning=f"Falling back to synthetic data because local data load failed: {exc}",
             market_zone=runtime.market_zone,
             interval=runtime.interval,
+            congestion_signal_source=str(market_data.attrs.get("congestion_signal_source", "synthetic_profile")),
         )
 
     prices_df = datasets["prices"]  # type: ignore[index]
@@ -248,6 +285,7 @@ def load_market_data(periods: int = 24) -> DataLoadResult:
             warning=f"Merged local dataset invalid; using synthetic fallback: {exc}",
             market_zone=runtime.market_zone,
             interval=runtime.interval,
+            congestion_signal_source=str(market_data.attrs.get("congestion_signal_source", "synthetic_profile")),
         )
 
     merged = _ensure_revenue_stacking_columns(_coerce_recent_window(merged, periods=periods))
@@ -258,6 +296,7 @@ def load_market_data(periods: int = 24) -> DataLoadResult:
         warning=warning,
         market_zone=str(metadata.get("market_zone", runtime.market_zone)),
         interval=str(metadata.get("interval", runtime.interval)),
+        congestion_signal_source=str(merged.attrs.get("congestion_signal_source", "unknown")),
     )
 
 
@@ -285,6 +324,7 @@ def load_market_data_for_mode(mode: Literal["sample", "real"] = "sample", period
                 last_updated=None,
                 market_zone=runtime.market_zone,
                 interval=runtime.interval,
+                congestion_signal_source=str(merged.attrs.get("congestion_signal_source", "unknown")),
             )
         except Exception as exc:
             market_data = generate_synthetic_market_data(periods=periods)
@@ -295,6 +335,7 @@ def load_market_data_for_mode(mode: Literal["sample", "real"] = "sample", period
                 warning=f"Sample data unavailable; using synthetic fallback: {exc}",
                 market_zone=runtime.market_zone,
                 interval=runtime.interval,
+                congestion_signal_source=str(market_data.attrs.get("congestion_signal_source", "synthetic_profile")),
             )
 
     return load_market_data(periods=periods)

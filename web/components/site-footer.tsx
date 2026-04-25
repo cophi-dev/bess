@@ -17,17 +17,17 @@ export function SiteFooter() {
             <Link href="/mission" className="hover:text-primary">
               Mission und Why BESS
             </Link>
-            <Link href="/wirtschaftlichkeit" className="hover:text-primary">
-              Wirtschaftlichkeit
-            </Link>
-            <Link href="/netzregulierung" className="hover:text-primary">
-              Netzregulierung
-            </Link>
-            <Link href="/daten" className="hover:text-primary">
-              Echtzeitdaten und KPIs
+            <Link href="/herausforderungen" className="hover:text-primary">
+              Herausforderungen
             </Link>
             <Link href="/news" className="hover:text-primary">
               News
+            </Link>
+            <Link href="/data" className="hover:text-primary">
+              Data und Live-KPIs
+            </Link>
+            <Link href="/simulator" className="hover:text-primary">
+              Simulator starten
             </Link>
           </div>
         </div>
@@ -42,8 +42,8 @@ export function SiteFooter() {
             >
               GitHub Repository
             </a>
-            <Link href="/simulator" className="hover:text-primary">
-              Simulator starten
+            <Link href="/mission" className="hover:text-primary">
+              BESS Kompass Journey
             </Link>
           </div>
         </div>

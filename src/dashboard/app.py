@@ -44,6 +44,12 @@ I18N = {
         ),
         "settings": "Simulation Settings",
         "settings_caption": "Choose battery assumptions and market-data scope for this run.",
+        "battery_header": "Battery",
+        "battery_caption": "Physical storage assumptions used by the optimizer.",
+        "data_header": "Data",
+        "data_caption": "Select the hourly market-data window behind this run.",
+        "scenario_header": "Sensitivity",
+        "scenario_caption_header": "Optional larger-pack comparison with the same C-rate.",
         "interface_header": "Interface",
         "interface_caption": "Choose display preferences for this session.",
         "language": "Language",
@@ -94,8 +100,9 @@ I18N = {
         "scenario_delta_rev": "Δ revenue",
         "scenario_delta_dis": "Δ discharged",
         "scenario_delta_cyc": "Δ equiv. cycles",
+        "scenario_delta_rev_per_mwh": "Δ revenue / added MWh",
         "stacking_header": "Revenue Stacking Assumptions",
-        "stacking_caption": "Simple educational assumptions for ancillary and capacity revenues.",
+        "stacking_caption": "Simple educational assumptions for ancillary, capacity, and congestion revenues.",
         "fcr_toggle": "Enable FCR availability",
         "afrr_toggle": "Enable aFRR availability + utilization",
         "capacity_toggle": "Enable capacity payment",
@@ -107,6 +114,13 @@ I18N = {
         "capacity_rate_label": "Capacity payment (EUR/MW/h)",
         "capacity_share_label": "Contracted capacity share of power",
         "congestion_bonus_label": "Congestion bonus (EUR/MWh)",
+        "congestion_signal_label": "Congestion signal intensity",
+        "congestion_signal_help": "Multiplier for the derived/provided congestion signal. 0 disables the signal; 1 keeps the data-driven proxy; values above 1 stress-test stronger congestion windows.",
+        "assumption_inputs_note": "Data-backed: day-ahead prices, wind/solar generation, and system load. Assumption-backed: FCR, aFRR, capacity payment, congestion bonus, and congestion intensity.",
+        "provenance_data_source": "Data source",
+        "provenance_scope": "Scope",
+        "provenance_last_update": "Last update",
+        "provenance_congestion_signal": "Congestion signal",
         "revenue_breakdown_title": "Revenue Breakdown",
         "revenue_breakdown_caption": "Real BESS portfolios rarely rely on arbitrage alone. Revenue stacking improves utilization and risk balance across market regimes.",
         "stream_arbitrage": "Arbitrage",
@@ -133,6 +147,43 @@ I18N = {
         "price": "Price",
         "soc": "State of charge",
         "step_revenue": "Step revenue",
+        "vnb_kicker": "DSO decision lens",
+        "vnb_title": "Market strong is not enough: the dispatch must fit the local grid",
+        "vnb_intro": (
+            "This run provides the market and dispatch signal. A distribution system operator should "
+            "combine it with local load-flow, congestion, voltage, and current checks before approving a grid node."
+        ),
+        "vnb_run_signal": "Current run signal",
+        "vnb_run_signal_text": (
+            "{revenue} EUR gross revenue in the selected horizon; roughly {annualized} EUR/year if scaled linearly. "
+            "Use this as a learning signal, not a forecast."
+        ),
+        "vnb_market_title": "Market attractiveness",
+        "vnb_market_label": "Price signal",
+        "vnb_market_text": "Strong means robust expected annual revenue from arbitrage, FCR, aFRR, capacity, and congestion assumptions.",
+        "vnb_grid_title": "Grid usefulness",
+        "vnb_grid_label": "Local grid effect",
+        "vnb_grid_text": "Suitable means the typical schedule relieves local constraints; critical means it can worsen congestion or redispatch.",
+        "vnb_cell_prioritize_title": "Market strong, grid suitable",
+        "vnb_cell_prioritize_label": "Prioritize",
+        "vnb_cell_prioritize_text": "Price signal and grid relief point in the same direction.",
+        "vnb_cell_review_title": "Market strong, grid critical",
+        "vnb_cell_review_label": "Review",
+        "vnb_cell_review_text": "Good revenue can still worsen congestion; require constraints or a redispatch contract.",
+        "vnb_cell_option_title": "Market weak, grid suitable",
+        "vnb_cell_option_label": "Optionality",
+        "vnb_cell_option_text": "Grid value may need connection terms, flexibility products, or long-term contracts.",
+        "vnb_cell_defer_title": "Market weak, grid critical",
+        "vnb_cell_defer_label": "Defer",
+        "vnb_cell_defer_text": "Neither the market signal nor the grid effect carries the case.",
+        "vnb_vertical_axis": "Grid effect",
+        "vnb_horizontal_axis": "Market attractiveness",
+        "vnb_checklist_title": "Practical DSO check",
+        "vnb_step_1": "Request an OpenAutobidder-DE run for the exact grid node: revenue stack and typical dispatch.",
+        "vnb_step_2": "Run a grid simulation with this dispatch and compare against known congestion windows.",
+        "vnb_step_3": "Estimate redispatch, voltage, and current-loading effects with and without the battery.",
+        "vnb_step_4": "Score both axes and decide by the quadrant.",
+        "vnb_reminder": "Reminder: a high market spread alone is never enough. The dispatch has to match the local grid situation.",
     },
     "de": {
         "title": "OpenAutobidder-DE",
@@ -151,6 +202,12 @@ I18N = {
         ),
         "settings": "Simulationseinstellungen",
         "settings_caption": "Waehle Batterieannahmen und Datengrundlage fuer diesen Lauf.",
+        "battery_header": "Batterie",
+        "battery_caption": "Physikalische Speicherannahmen fuer die Optimierung.",
+        "data_header": "Daten",
+        "data_caption": "Waehle das stuendliche Marktdatenfenster fuer diesen Lauf.",
+        "scenario_header": "Sensitivitaet",
+        "scenario_caption_header": "Optionaler Vergleich mit groesserem Pack und gleicher C-Rate.",
         "interface_header": "Interface",
         "interface_caption": "Anzeigeeinstellungen fuer diese Sitzung.",
         "language": "Sprache",
@@ -201,8 +258,9 @@ I18N = {
         "scenario_delta_rev": "Delta Erloes",
         "scenario_delta_dis": "Delta Entladung",
         "scenario_delta_cyc": "Delta Vollzyklen",
+        "scenario_delta_rev_per_mwh": "Delta Erloes / Zusatz-MWh",
         "stacking_header": "Revenue-Stacking-Annahmen",
-        "stacking_caption": "Einfache Lernannahmen fuer Regelenergie- und Verfuegbarkeitserloese.",
+        "stacking_caption": "Einfache Lernannahmen fuer Regelenergie-, Kapazitaets- und Engpasserloese.",
         "fcr_toggle": "FCR-Verfuegbarkeit aktivieren",
         "afrr_toggle": "aFRR-Verfuegbarkeit + Aktivierung aktivieren",
         "capacity_toggle": "Kapazitaetszahlung aktivieren",
@@ -214,6 +272,13 @@ I18N = {
         "capacity_rate_label": "Kapazitaetszahlung (EUR/MW/h)",
         "capacity_share_label": "Vertraglicher Leistungsanteil",
         "congestion_bonus_label": "Netzengpass-Bonus (EUR/MWh)",
+        "congestion_signal_label": "Intensitaet des Engpasssignals",
+        "congestion_signal_help": "Multiplikator fuer das abgeleitete oder gelieferte Engpasssignal. 0 deaktiviert das Signal; 1 nutzt den Daten-Proxy; Werte ueber 1 testen staerkere Engpassfenster.",
+        "assumption_inputs_note": "Datenbasiert: Day-Ahead-Preise, Wind-/Solarerzeugung und Systemlast. Annahmebasiert: FCR, aFRR, Kapazitaetszahlung, Engpassbonus und Engpassintensitaet.",
+        "provenance_data_source": "Datenquelle",
+        "provenance_scope": "Scope",
+        "provenance_last_update": "Letztes Update",
+        "provenance_congestion_signal": "Engpasssignal",
         "revenue_breakdown_title": "Revenue-Aufteilung",
         "revenue_breakdown_caption": "Reale BESS-Betreiber verlassen sich selten nur auf Arbitrage. Revenue Stacking verbessert Auslastung und Risikobalance ueber verschiedene Marktphasen.",
         "stream_arbitrage": "Arbitrage",
@@ -240,6 +305,43 @@ I18N = {
         "price": "Preis",
         "soc": "Ladezustand",
         "step_revenue": "Schritt-Erlos",
+        "vnb_kicker": "VNB-Entscheidungslogik",
+        "vnb_title": "Markt stark reicht nicht: Der Fahrplan muss zur lokalen Netzlage passen",
+        "vnb_intro": (
+            "Dieser Lauf liefert das Markt- und Fahrplansignal. Ein Verteilnetzbetreiber sollte es "
+            "mit Lastfluss, Engpasszeiten, Spannungsband und Strombelastung am konkreten Netzpunkt kombinieren."
+        ),
+        "vnb_run_signal": "Signal aus diesem Lauf",
+        "vnb_run_signal_text": (
+            "{revenue} EUR Bruttoerloes im gewaehlten Horizont; linear skaliert etwa {annualized} EUR/Jahr. "
+            "Als Lernsignal lesen, nicht als Prognose."
+        ),
+        "vnb_market_title": "Marktattraktivitaet",
+        "vnb_market_label": "Preissignal",
+        "vnb_market_text": "Stark heisst: robuster erwarteter Jahreserloes aus Arbitrage, FCR, aFRR, Kapazitaet und Engpassannahmen.",
+        "vnb_grid_title": "Netzdienlichkeit",
+        "vnb_grid_label": "Lokale Netzwirkung",
+        "vnb_grid_text": "Passend heisst: der typische Fahrplan entlastet den Netzpunkt; kritisch heisst: er kann Engpaesse oder Redispatch verstaerken.",
+        "vnb_cell_prioritize_title": "Markt stark, Netz passend",
+        "vnb_cell_prioritize_label": "Priorisieren",
+        "vnb_cell_prioritize_text": "Preislogik und Netzentlastung zeigen in dieselbe Richtung.",
+        "vnb_cell_review_title": "Markt stark, Netz kritisch",
+        "vnb_cell_review_label": "Pruefen",
+        "vnb_cell_review_text": "Guter Ertrag kann Engpaesse verschaerfen; nur mit Auflagen oder Redispatch-Vertrag zulassen.",
+        "vnb_cell_option_title": "Markt schwach, Netz passend",
+        "vnb_cell_option_label": "Optionalitaet",
+        "vnb_cell_option_text": "Netznutzen kann ueber Anschlussbedingungen, Flexprodukte oder langfristige Vertraege entstehen.",
+        "vnb_cell_defer_title": "Markt schwach, Netz kritisch",
+        "vnb_cell_defer_label": "Zurueckstellen",
+        "vnb_cell_defer_text": "Weder Ertragssignal noch Standortlogik tragen den Case.",
+        "vnb_vertical_axis": "Netzwirkung",
+        "vnb_horizontal_axis": "Marktattraktivitaet",
+        "vnb_checklist_title": "Praktische VNB-Pruefung",
+        "vnb_step_1": "OpenAutobidder-DE-Lauf fuer den exakten Netzpunkt anfordern: Revenue Stack und typischer Fahrplan.",
+        "vnb_step_2": "Netzsimulation mit diesem Fahrplan rechnen und mit bekannten Engpasszeiten abgleichen.",
+        "vnb_step_3": "Redispatch-, Spannungs- und Strombelastungswirkung mit und ohne Speicher schaetzen.",
+        "vnb_step_4": "Beide Achsen bewerten und nach Quadrant entscheiden.",
+        "vnb_reminder": "Merke: Ein hoher Markt-Spread allein reicht nie. Der Fahrplan muss zur lokalen Netzlage passen.",
     },
 }
 
@@ -282,6 +384,7 @@ def _scenario_delta_html(
     delta_revenue: float,
     delta_discharged: float,
     delta_cycles: float,
+    delta_revenue_per_mwh: float,
 ) -> str:
     return (
         f"<p class='oa-hero-window' style='font-weight:600'>{ui['scenario_row_title']} "
@@ -290,7 +393,122 @@ def _scenario_delta_html(
         f"<span><strong>{ui['scenario_delta_rev']}</strong> {delta_revenue:+,.0f} EUR</span>"
         f"<span><strong>{ui['scenario_delta_dis']}</strong> {delta_discharged:+,.1f} MWh</span>"
         f"<span><strong>{ui['scenario_delta_cyc']}</strong> {delta_cycles:+.2f}</span>"
+        f"<span><strong>{ui['scenario_delta_rev_per_mwh']}</strong> {delta_revenue_per_mwh:+,.0f} EUR/MWh</span>"
         "</div>"
+    )
+
+
+def _provenance_badges_html(
+    ui: dict[str, str],
+    *,
+    source_label: str,
+    zone_interval: str,
+    last_update: str,
+    congestion_signal_source: str,
+) -> str:
+    items = [
+        (ui["provenance_data_source"], source_label),
+        (ui["provenance_scope"], zone_interval),
+        (ui["provenance_last_update"], last_update),
+        (ui["provenance_congestion_signal"], congestion_signal_source.replace("_", " ")),
+    ]
+    badges = "".join(
+        (
+            "<div class='oa-hero-tile'>"
+            f"<div class='oa-hero-k'>{label}</div>"
+            f"<div class='oa-hero-s' style='margin-top:0.25rem'>{value}</div>"
+            "</div>"
+        )
+        for label, value in items
+    )
+    return f"<div class='oa-hero-metric-row'>{badges}</div>"
+
+
+def _vnb_decision_html(
+    ui: dict[str, str],
+    *,
+    total_revenue_eur: float,
+    horizon_days: int,
+) -> str:
+    annualized_revenue = total_revenue_eur * 365.0 / max(float(horizon_days), 1.0)
+    axis_cards = [
+        (ui["vnb_market_label"], ui["vnb_market_title"], ui["vnb_market_text"]),
+        (ui["vnb_grid_label"], ui["vnb_grid_title"], ui["vnb_grid_text"]),
+    ]
+    matrix_cells = [
+        (
+            "oa-vnb-cell-primary",
+            ui["vnb_cell_prioritize_label"],
+            ui["vnb_cell_prioritize_title"],
+            ui["vnb_cell_prioritize_text"],
+        ),
+        (
+            "oa-vnb-cell-warning",
+            ui["vnb_cell_review_label"],
+            ui["vnb_cell_review_title"],
+            ui["vnb_cell_review_text"],
+        ),
+        (
+            "oa-vnb-cell-highlight",
+            ui["vnb_cell_option_label"],
+            ui["vnb_cell_option_title"],
+            ui["vnb_cell_option_text"],
+        ),
+        (
+            "oa-vnb-cell-muted",
+            ui["vnb_cell_defer_label"],
+            ui["vnb_cell_defer_title"],
+            ui["vnb_cell_defer_text"],
+        ),
+    ]
+    checklist = [ui[f"vnb_step_{step}"] for step in range(1, 5)]
+    axis_html = "".join(
+        (
+            "<div class='oa-vnb-axis-card'>"
+            f"<p>{label}</p>"
+            f"<h3>{title}</h3>"
+            f"<span>{text}</span>"
+            "</div>"
+        )
+        for label, title, text in axis_cards
+    )
+    cells_html = "".join(
+        (
+            f"<div class='oa-vnb-cell {tone}'>"
+            f"<p>{label}</p>"
+            f"<h3>{title}</h3>"
+            f"<span>{text}</span>"
+            "</div>"
+        )
+        for tone, label, title, text in matrix_cells
+    )
+    checklist_html = "".join(f"<li>{item}</li>" for item in checklist)
+    run_signal = ui["vnb_run_signal_text"].format(
+        revenue=f"{total_revenue_eur:,.0f}",
+        annualized=f"{annualized_revenue:,.0f}",
+    )
+    return (
+        "<section class='oa-vnb-section'>"
+        f"<p class='oa-vnb-kicker'>{ui['vnb_kicker']}</p>"
+        f"<h2>{ui['vnb_title']}</h2>"
+        f"<p class='oa-vnb-intro'>{ui['vnb_intro']}</p>"
+        "<div class='oa-vnb-axis-grid'>"
+        f"<div class='oa-vnb-run'><p>{ui['vnb_run_signal']}</p><span>{run_signal}</span></div>"
+        f"{axis_html}"
+        "</div>"
+        "<div class='oa-vnb-matrix-shell'>"
+        f"<div class='oa-vnb-axis-vertical'>{ui['vnb_vertical_axis']}</div>"
+        "<div class='oa-vnb-matrix'>"
+        f"{cells_html}"
+        f"<p class='oa-vnb-axis-horizontal'>{ui['vnb_horizontal_axis']}</p>"
+        "</div>"
+        "</div>"
+        "<div class='oa-vnb-checklist'>"
+        f"<h3>{ui['vnb_checklist_title']}</h3>"
+        f"<ol>{checklist_html}</ol>"
+        f"<p>{ui['vnb_reminder']}</p>"
+        "</div>"
+        "</section>"
     )
 
 
@@ -369,6 +587,8 @@ def main() -> None:
 
     st.sidebar.header(ui["settings"])
     st.sidebar.caption(ui["settings_caption"])
+    st.sidebar.markdown(f"##### {ui['battery_header']}")
+    st.sidebar.caption(ui["battery_caption"])
     capacity_mwh = st.sidebar.slider(
         ui["cap_label"],
         min_value=2.0,
@@ -388,6 +608,9 @@ def main() -> None:
     )
     st.sidebar.caption(ui["crate_caption"])
     power_mw = capacity_mwh * power_ratio
+
+    st.sidebar.markdown(f"##### {ui['data_header']}")
+    st.sidebar.caption(ui["data_caption"])
     horizon_days = st.sidebar.selectbox(
         ui["horizon_label"],
         options=[1, 2, 7],
@@ -402,6 +625,11 @@ def main() -> None:
         help=ui["data_mode_help"],
     )
     st.sidebar.caption(ui["data_mode_caption"])
+    update_clicked = st.sidebar.button(ui["update_btn"], width="stretch")
+    st.sidebar.caption(ui["update_caption"])
+
+    st.sidebar.markdown(f"##### {ui['scenario_header']}")
+    st.sidebar.caption(ui["scenario_caption_header"])
     extra_storage_mwh = st.sidebar.slider(
         ui["scenario_label"],
         min_value=0.0,
@@ -424,8 +652,14 @@ def main() -> None:
     capacity_rate = st.sidebar.number_input(ui["capacity_rate_label"], min_value=0.0, value=1.6, step=0.1)
     capacity_share = st.sidebar.slider(ui["capacity_share_label"], min_value=0.0, max_value=1.0, value=0.3, step=0.05)
     congestion_bonus = st.sidebar.number_input(ui["congestion_bonus_label"], min_value=0.0, value=12.0, step=1.0)
-    update_clicked = st.sidebar.button(ui["update_btn"], width="stretch")
-    st.sidebar.caption(ui["update_caption"])
+    congestion_signal_multiplier = st.sidebar.slider(
+        ui["congestion_signal_label"],
+        min_value=0.0,
+        max_value=2.0,
+        value=1.0,
+        step=0.1,
+        help=ui["congestion_signal_help"],
+    )
     run_clicked = st.sidebar.button(ui["run_btn"], type="primary", width="stretch")
     st.sidebar.caption(ui["run_caption"])
 
@@ -476,6 +710,7 @@ def main() -> None:
         capacity_rate,
         capacity_share,
         congestion_bonus,
+        congestion_signal_multiplier,
     )
     if (
         run_clicked
@@ -491,6 +726,9 @@ def main() -> None:
         market_data["afrr_activation_ratio"] = afrr_activation_ratio
         market_data["capacity_payment_eur_mw_h"] = capacity_rate
         market_data["congestion_bonus_eur_mwh"] = congestion_bonus
+        market_data["congestion_signal"] = (
+            market_data["congestion_signal"].clip(0.0, 1.0) * congestion_signal_multiplier
+        ).clip(0.0, 1.0)
         result = optimize_bess_with_stacking(
             market_data=market_data,
             bess=bess,
@@ -529,9 +767,19 @@ def main() -> None:
     zone_interval = f"{load_result.market_zone} @ {load_result.interval}"
     if load_result.last_updated:
         updated_local = load_result.last_updated.astimezone(UTC).strftime("%Y-%m-%d %H:%M UTC")
-        st.caption(f"Data source: {source_label} | Scope: {zone_interval} | Last update: {updated_local}")
     else:
-        st.caption(f"Data source: {source_label} | Scope: {zone_interval} | Last update: not available")
+        updated_local = "not available"
+    st.markdown(
+        _provenance_badges_html(
+            ui,
+            source_label=source_label,
+            zone_interval=zone_interval,
+            last_update=updated_local,
+            congestion_signal_source=load_result.congestion_signal_source,
+        ),
+        unsafe_allow_html=True,
+    )
+    st.caption(ui["assumption_inputs_note"])
     if load_result.warning:
         st.warning(f"Fallback context: {load_result.warning}")
     dispatch = result.dispatch
@@ -561,16 +809,27 @@ def main() -> None:
     )
     st.caption(ui["load_caption"])
     if result_scenario is not None and extra_storage_mwh > 1e-6:
+        delta_revenue = result_scenario.total_revenue_eur - result.total_revenue_eur
         st.markdown(
             _scenario_delta_html(
                 ui,
                 extra_mwh=extra_storage_mwh,
-                delta_revenue=result_scenario.total_revenue_eur - result.total_revenue_eur,
+                delta_revenue=delta_revenue,
                 delta_discharged=result_scenario.discharged_energy_mwh - result.discharged_energy_mwh,
                 delta_cycles=result_scenario.estimated_cycles - result.estimated_cycles,
+                delta_revenue_per_mwh=delta_revenue / extra_storage_mwh,
             ),
             unsafe_allow_html=True,
         )
+
+    st.markdown(
+        _vnb_decision_html(
+            ui,
+            total_revenue_eur=result.total_revenue_eur,
+            horizon_days=horizon_days,
+        ),
+        unsafe_allow_html=True,
+    )
 
     st.subheader(ui["kpi_economics_header"])
     col1, col2, col3, col4, col5 = st.columns(5)

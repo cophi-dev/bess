@@ -160,11 +160,12 @@ export function DailyBriefingView() {
     <div className="container-shell py-12 md:py-14">
       <FadeIn className="max-w-3xl">
         <p className="text-sm font-medium uppercase tracking-[0.18em] text-accent">
-          Tagesupdate Deutschland
+          Data
         </p>
-        <h1 className="mt-3 text-3xl leading-tight md:text-[2.6rem]">Tagesupdate auf einen Blick</h1>
+        <h1 className="mt-3 text-3xl leading-tight md:text-[2.6rem]">Live-KPIs und Tagesupdate</h1>
         <p className="mt-3 text-base text-text-secondary md:text-lg">
-          Kurz, klar, relevant.
+          Verbrauch, Erzeugung, Netzfrequenz, installierte BESS-Leistung und
+          taegliche Einordnung fuer den deutschen Markt.
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs md:text-sm text-text-secondary">
           <span className="inline-flex items-center gap-1">
@@ -378,7 +379,7 @@ export function DailyBriefingView() {
           <FadeIn delay={0.2} className="mt-12 rounded-card bg-surface p-7 shadow-card">
             <h2 className="text-2xl">Nächster Schritt</h2>
             <p className="mt-3 text-text-secondary">
-              Vertiefe die Marktmechanik direkt mit Simulation und Revenue-Stacking-Lernpfad.
+              Vertiefe die Marktmechanik direkt mit Simulation und den wichtigsten Herausforderungen.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <Link
@@ -388,10 +389,10 @@ export function DailyBriefingView() {
                 Zum Simulator
               </Link>
               <Link
-                href="/revenue-stacking"
+                href="/herausforderungen"
                 className="rounded-card border border-primary/15 bg-background-alt px-6 py-3 text-sm font-medium text-primary transition hover:border-primary/40"
               >
-                Mehr zu Revenue Stacking
+                Herausforderungen verstehen
               </Link>
             </div>
           </FadeIn>

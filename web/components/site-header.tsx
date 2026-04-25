@@ -5,10 +5,9 @@ import { usePathname } from "next/navigation";
 
 const navItems = [
   { href: "/mission", label: "Mission" },
-  { href: "/wirtschaftlichkeit", label: "Wirtschaftlichkeit" },
-  { href: "/netzregulierung", label: "Netzregulierung" },
-  { href: "/daten", label: "Daten" },
+  { href: "/herausforderungen", label: "Herausforderungen" },
   { href: "/news", label: "News" },
+  { href: "/data", label: "Data" },
   { href: "/simulator", label: "Simulator" },
 ];
 
@@ -24,7 +23,10 @@ export function SiteHeader() {
 
         <nav className="hidden max-w-[min(100%,52rem)] flex-wrap items-center justify-end gap-0.5 text-sm lg:flex">
           {navItems.map((item) => {
-            const active = pathname === item.href;
+            const active =
+              pathname === item.href ||
+              (item.href === "/mission" && pathname === "/") ||
+              pathname.startsWith(`${item.href}/`);
             return (
               <Link
                 key={item.href}
@@ -43,10 +45,10 @@ export function SiteHeader() {
 
         <div className="hidden items-center lg:flex">
           <Link
-            href="/daten"
+            href="/data"
             className="rounded-card bg-primary px-4 py-2 text-sm font-medium text-white transition hover:bg-primary/90"
           >
-            Live-Daten
+            Live-Data
           </Link>
         </div>
 
@@ -56,7 +58,10 @@ export function SiteHeader() {
           </summary>
           <nav className="absolute right-0 top-full mt-1 flex min-w-[12rem] flex-col gap-0.5 rounded-card border border-primary/10 bg-surface/98 p-2 shadow-card backdrop-blur">
             {navItems.map((item) => {
-              const active = pathname === item.href;
+              const active =
+                pathname === item.href ||
+                (item.href === "/mission" && pathname === "/") ||
+                pathname.startsWith(`${item.href}/`);
               return (
                 <Link
                   key={item.href}

@@ -13,14 +13,14 @@ const newsItems = [
   {
     title: "Marktupdate",
     text: "Wie Preisniveaus, Volatilitaet und Flexibilitaetsbedarf die BESS-Erlosstruktur veraendern.",
-    href: "/daten",
-    cta: "Zu den aktuellen Daten",
+    href: "/data",
+    cta: "Zu Data und Live-KPIs",
   },
   {
-    title: "Regulatorik",
-    text: "Welche Signale aus Netzregulierung und Systemplanung fuer neue Projekte relevant sind.",
-    href: "/netzregulierung",
-    cta: "Netzregulierung lesen",
+    title: "Herausforderungen",
+    text: "Welche Markt-, Netz- und Standortfragen fuer neue Projekte relevant sind.",
+    href: "/herausforderungen",
+    cta: "Herausforderungen lesen",
   },
   {
     title: "Projektfokus",
@@ -37,7 +37,7 @@ export default function NewsPage() {
         <h1 className="text-4xl md:text-5xl">News</h1>
         <p className="mt-4 text-lg text-text-secondary">
           Diese Seite buendelt die wichtigsten Entwicklungen fuer den deutschen
-          BESS-Kontext: Marktdynamik, Netzregulierung und operative Prioritaeten.
+          BESS-Kontext: Marktdynamik, Herausforderungen und operative Prioritaeten.
         </p>
       </FadeIn>
 

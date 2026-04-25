@@ -4,11 +4,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const base = "https://bess-pi.vercel.app";
   const routes = [
     "",
+    "/mission",
+    "/herausforderungen",
+    "/news",
+    "/data",
     "/simulator",
-    "/revenue-stacking",
-    "/german-market",
-    "/resources",
-    "/about",
   ];
 
   return routes.map((route) => ({
