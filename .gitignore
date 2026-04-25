@@ -28,11 +28,11 @@ env/
 .vscode/
 
 # Local data outputs
-data/processed/
-!data/processed/prices_sample.csv
-!data/processed/generation_sample.csv
+data/processed/*
+!data/processed/mastr_bess_stats.parquet
 data/interim/
 *.parquet
+!data/processed/mastr_bess_stats.parquet
 *.feather
 
 # Node / Next.js

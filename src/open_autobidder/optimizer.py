@@ -23,6 +23,7 @@ class OptimizationResult:
     discharged_energy_mwh: float
     estimated_cycles: float
     revenue_breakdown_eur: dict[str, float] | None = None
+    assumptions_summary: str = ""
 
 
 def optimize_arbitrage(
@@ -115,6 +116,11 @@ def optimize_arbitrage(
         discharged_energy_mwh=float(discharged_energy),
         estimated_cycles=float(estimated_cycles),
         revenue_breakdown_eur={"arbitrage": float(dispatch["step_revenue_eur"].sum())},
+        assumptions_summary=_format_assumptions_summary(
+            market_data=market_data,
+            bess=bess,
+            enabled_streams=["day-ahead arbitrage"],
+        ),
     )
 
 
@@ -135,6 +141,34 @@ def _column_or_default(
     if column in market_data.columns:
         return market_data[column].astype(float)
     return pd.Series(default_value, index=market_data.index, dtype=float)
+
+
+def _format_assumptions_summary(
+    *,
+    market_data: pd.DataFrame,
+    bess: BESSConfig,
+    enabled_streams: list[str],
+    capacity_contract_share: float | None = None,
+) -> str:
+    """Create a concise, user-facing summary of the current optimization assumptions."""
+
+    epr_hours = bess.capacity_mwh / bess.power_mw if bess.power_mw > 0 else 0.0
+    horizon_hours = len(market_data) * bess.timestep_hours
+    soc_window = f"{bess.soc_min_fraction:.0%}-{bess.soc_max_fraction:.0%}"
+    stream_text = ", ".join(enabled_streams) if enabled_streams else "day-ahead arbitrage only"
+    capacity_text = (
+        f" Capacity payment uses {capacity_contract_share:.0%} of configured MW."
+        if capacity_contract_share is not None
+        else ""
+    )
+    return (
+        f"Run assumptions: {bess.capacity_mwh:.1f} MWh / {bess.power_mw:.1f} MW "
+        f"({epr_hours:.1f}h EPR), {horizon_hours:.0f}h horizon, hourly timestep, "
+        f"{bess.rte:.0%} round-trip efficiency, SOC window {soc_window}, "
+        f"start/end SOC {bess.initial_soc_fraction:.0%}/{bess.final_soc_target_fraction:.0%}. "
+        f"Enabled revenue streams: {stream_text}.{capacity_text} "
+        "FCR, aFRR, capacity, and congestion values are educational assumptions unless backed by input data."
+    )
 
 
 def optimize_bess_with_stacking(
@@ -281,6 +315,15 @@ def optimize_bess_with_stacking(
         "capacity": float(dispatch["capacity_revenue_eur"].sum()),
         "congestion_bonus": float(dispatch["congestion_bonus_revenue_eur"].sum()),
     }
+    enabled_streams = ["day-ahead arbitrage"]
+    if stacking.enable_fcr:
+        enabled_streams.append("FCR availability")
+    if stacking.enable_afrr:
+        enabled_streams.append("aFRR availability + activation")
+    if stacking.enable_capacity_payment:
+        enabled_streams.append("capacity availability")
+    if stacking.enable_congestion_bonus:
+        enabled_streams.append("congestion proxy bonus")
 
     return OptimizationResult(
         dispatch=dispatch,
@@ -291,4 +334,10 @@ def optimize_bess_with_stacking(
         discharged_energy_mwh=discharged_energy,
         estimated_cycles=float(estimated_cycles),
         revenue_breakdown_eur=revenue_breakdown,
+        assumptions_summary=_format_assumptions_summary(
+            market_data=market_data,
+            bess=bess,
+            enabled_streams=enabled_streams,
+            capacity_contract_share=contracted_capacity_mw / bess.power_mw if bess.power_mw > 0 else 0.0,
+        ),
     )

@@ -21,6 +21,27 @@ DESIGN_TOKENS = {
 }
 
 
+def badge_html(label: str, variant: str, detail: str | None = None) -> str:
+    """Return a shared data/assumption badge using the DESIGN.md palette."""
+
+    detail_html = f"<span>{detail}</span>" if detail else ""
+    return f"<span class='oa-badge oa-badge-{variant}'>{label}{detail_html}</span>"
+
+
+def render_education_footer() -> None:
+    """Render the shared educational disclaimer required on every page."""
+
+    st.markdown(
+        (
+            "<div class='oa-education-footer'>"
+            "Dies ist ein Bildungswerkzeug fuer BESS-Markt- und Netzverstaendnis. "
+            "Keine Handels-, Investitions- oder Netzanschlussberatung; Ergebnisse sind vereinfachte Modell- und Lernannahmen."
+            "</div>"
+        ),
+        unsafe_allow_html=True,
+    )
+
+
 def apply_design_theme(theme_mode: str = "warm") -> None:
     """Apply shared dashboard styles from DESIGN.md tokens."""
     tokens = DESIGN_TOKENS
@@ -269,6 +290,68 @@ def apply_design_theme(theme_mode: str = "warm") -> None:
             .oa-section-spacer {{
                 margin-top: 2.2rem;
                 margin-bottom: 1.1rem;
+            }}
+
+            .oa-badge-row {{
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.55rem;
+                align-items: center;
+                margin: 0.35rem 0 0.8rem 0;
+            }}
+
+            .oa-badge {{
+                display: inline-flex;
+                align-items: center;
+                gap: 0.35rem;
+                width: fit-content;
+                border-radius: 999px;
+                padding: 0.26rem 0.68rem;
+                font-size: 0.74rem;
+                font-weight: 700;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                border: 1px solid transparent;
+                line-height: 1.25;
+            }}
+
+            .oa-badge span {{
+                color: inherit;
+                font-weight: 500;
+                letter-spacing: 0;
+                text-transform: none;
+            }}
+
+            .oa-badge-real {{
+                color: var(--oa-success);
+                background: color-mix(in srgb, var(--oa-success) 13%, var(--oa-card-background));
+                border-color: color-mix(in srgb, var(--oa-success) 42%, var(--oa-card-border));
+            }}
+
+            .oa-badge-assumption {{
+                color: #7A5A1F;
+                background: color-mix(in srgb, var(--oa-warning) 20%, var(--oa-card-background));
+                border-color: color-mix(in srgb, var(--oa-warning) 58%, var(--oa-card-border));
+            }}
+
+            .oa-education-note {{
+                margin: 0.6rem 0 1rem 0;
+                padding: 0.85rem 1rem;
+                border-radius: 14px;
+                color: var(--oa-text-secondary);
+                background: color-mix(in srgb, var(--oa-secondary) 72%, var(--oa-card-background));
+                border: 1px solid var(--oa-card-border);
+                font-size: 0.92rem;
+                line-height: 1.6;
+            }}
+
+            .oa-education-footer {{
+                margin-top: 2.8rem;
+                padding: 1rem 1.1rem;
+                border-top: 1px solid var(--oa-card-border);
+                color: var(--oa-text-secondary);
+                font-size: 0.88rem;
+                text-align: center;
             }}
 
             .oa-hero-metric-row {{

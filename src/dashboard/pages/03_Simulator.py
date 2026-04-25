@@ -24,7 +24,7 @@ from open_autobidder.config import BESSConfig
 from open_autobidder.data_ingestion import update_local_data
 from open_autobidder.data_loader import load_market_data_for_mode
 from open_autobidder.optimizer import RevenueStackingConfig, optimize_bess_with_stacking
-from dashboard.theme import DESIGN_TOKENS, apply_design_theme
+from dashboard.theme import DESIGN_TOKENS, apply_design_theme, badge_html, render_education_footer
 
 I18N = {
     "en": {
@@ -46,10 +46,23 @@ I18N = {
         "settings_caption": "Choose battery assumptions and market-data scope for this run.",
         "battery_header": "Battery",
         "battery_caption": "Physical storage assumptions used by the optimizer.",
+        "real_data_badge": "Real Data – MaStR",
+        "assumption_badge": "Lernannahme / Sensitivity",
+        "assumption_badge_detail": "editable learning input",
+        "mastr_example_header": "Real German MaStR example",
+        "mastr_example_btn": "Load realistic German example from MaStR",
+        "mastr_example_caption": "Prefills a typical 10 MW / 20 MWh, 2 hour grid-scale BESS case.",
+        "duration_header": "Storage duration (EPR)",
+        "duration_caption": "The storage duration (EPR) strongly affects revenue stacking and grid impact.",
+        "duration_label": "Choose storage duration",
+        "duration_help": "EPR = energy-to-power ratio. A 20 MWh / 10 MW system has 2 hours of duration.",
+        "duration_result_label": "Selected EPR",
+        "duration_result_help": "Higher EPR means more hours at full power, usually more shifting depth but lower MW for the same MWh.",
+        "duration_power_caption": "Derived max power: {mw:.1f} MW. Same MWh, longer duration means lower MW.",
         "data_header": "Data",
         "data_caption": "Select the hourly market-data window behind this run.",
         "scenario_header": "Sensitivity",
-        "scenario_caption_header": "Optional larger-pack comparison with the same C-rate.",
+        "scenario_caption_header": "Optional larger-pack comparison with the same EPR.",
         "interface_header": "Interface",
         "interface_caption": "Choose display preferences for this session.",
         "language": "Language",
@@ -71,6 +84,9 @@ I18N = {
         "update_caption": "Refresh local market data (for real mode when API access is configured).",
         "run_btn": "Run Optimization",
         "run_caption": "Run optimization and refresh KPIs, chart, and hourly table.",
+        "reset_defaults_btn": "Reset to defaults",
+        "reset_defaults_caption": "Restore the educational baseline inputs.",
+        "optimizing_status": "Running optimizer and sensitivity checks...",
         "hero_header": "At a glance",
         "hero_window": "Horizon: {days} day(s) — {steps} hourly steps in this run.",
         "hero_installed": "Installed storage",
@@ -94,19 +110,32 @@ I18N = {
         "kpi_power": "Configured max battery power",
         "kpi_power_help": "Maximum charge or discharge rate derived from capacity and selected C-rate.",
         "scenario_label": "Extra storage to compare (MWh)",
-        "scenario_help": "Optional second run: same C-rate, capacity increased by this amount.",
+        "scenario_help": "Optional second run: same storage duration, capacity increased by this amount.",
         "scenario_caption": "Larger pack scenario for sensitivity.",
         "scenario_row_title": "Sensitivity vs larger pack",
         "scenario_delta_rev": "Δ revenue",
         "scenario_delta_dis": "Δ discharged",
         "scenario_delta_cyc": "Δ equiv. cycles",
         "scenario_delta_rev_per_mwh": "Δ revenue / added MWh",
+        "epr_sensitivity_title": "EPR sensitivity: 2h vs 4h vs 6h",
+        "epr_sensitivity_caption": "Same MWh, different power. This shows how duration changes gross revenue, discharged energy, and cycling in this learning model.",
+        "epr_duration_col": "EPR",
+        "epr_power_col": "Power (MW)",
+        "epr_revenue_col": "Revenue (EUR)",
+        "epr_revenue_mw_col": "Revenue / MW",
+        "epr_selected_col": "Selected",
+        "epr_discharged_col": "Discharged (MWh)",
+        "epr_cycles_col": "Cycles",
         "stacking_header": "Revenue Stacking Assumptions",
         "stacking_caption": "Simple educational assumptions for ancillary, capacity, and congestion revenues.",
         "fcr_toggle": "Enable FCR availability",
         "afrr_toggle": "Enable aFRR availability + utilization",
         "capacity_toggle": "Enable capacity payment",
         "congestion_toggle": "Enable congestion bonus",
+        "fcr_help": "Learning assumption for paid reserve availability per MW and hour.",
+        "afrr_help": "Learning assumption for balancing reserve availability plus simplified activation energy.",
+        "capacity_help": "Learning assumption for availability-style payments; not a project-specific contract.",
+        "congestion_help": "Learning proxy for local grid value during congestion windows.",
         "fcr_rate_label": "FCR availability (EUR/MW/h)",
         "afrr_avail_label": "aFRR availability (EUR/MW/h)",
         "afrr_util_label": "aFRR utilization (EUR/MWh)",
@@ -123,6 +152,14 @@ I18N = {
         "provenance_congestion_signal": "Congestion signal",
         "revenue_breakdown_title": "Revenue Breakdown",
         "revenue_breakdown_caption": "Real BESS portfolios rarely rely on arbitrage alone. Revenue stacking improves utilization and risk balance across market regimes.",
+        "revenue_table_caption": "Breakdown by learning category. Green-tagged rows depend directly on market-price data; orange-tagged rows are educational assumptions.",
+        "breakdown_category_col": "Category",
+        "breakdown_basis_col": "Basis",
+        "breakdown_value_col": "Value (EUR)",
+        "basis_real_data": "Real Data – price spread",
+        "basis_learning_assumption": "Lernannahme – simplified market proxy",
+        "assumptions_title": "Assumptions used in this run",
+        "assumptions_caption": "This summary is generated by the optimizer so EPR, SOC, efficiency, horizon, and enabled revenue streams stay explicit.",
         "stream_arbitrage": "Arbitrage",
         "stream_fcr": "FCR",
         "stream_afrr_availability": "aFRR availability",
@@ -141,6 +178,11 @@ I18N = {
         "reading_guide": "Reading guide: Positive bars = charging, negative bars = discharging, green line = SOC. Hover any timestamp for exact power, price, and step revenue values.",
         "table_title": "Hourly Dispatch Table",
         "table_caption": "Detailed hourly output: market price, battery action, SOC, and resulting step revenue.",
+        "next_steps_title": "Nächste Schritte / Was kommt als Nächstes?",
+        "next_steps_body": (
+            "Planned model extensions: intraday trading, imbalance exposure, degradation cost curves, "
+            "portfolio constraints, real network simulation with local load-flow checks, and richer redispatch/flexibility products."
+        ),
         "time": "Time",
         "charge_power": "Charge power",
         "discharge_power": "Discharge power",
@@ -204,10 +246,23 @@ I18N = {
         "settings_caption": "Waehle Batterieannahmen und Datengrundlage fuer diesen Lauf.",
         "battery_header": "Batterie",
         "battery_caption": "Physikalische Speicherannahmen fuer die Optimierung.",
+        "real_data_badge": "Real Data – MaStR",
+        "assumption_badge": "Lernannahme / Sensitivity",
+        "assumption_badge_detail": "veraenderbarer Lerninput",
+        "mastr_example_header": "Reales deutsches MaStR-Beispiel",
+        "mastr_example_btn": "Realistisches deutsches Beispiel aus MaStR laden",
+        "mastr_example_caption": "Fuellt einen typischen 10 MW / 20 MWh, 2-Stunden-Netzbatterie-Case vor.",
+        "duration_header": "Speicherdauer (EPR)",
+        "duration_caption": "Die Speicherdauer (EPR) hat starken Einfluss auf Revenue Stacking und Netzwirkung.",
+        "duration_label": "Speicherdauer waehlen",
+        "duration_help": "EPR = Energie-Leistungs-Verhaeltnis. Ein 20 MWh / 10 MW System hat 2 Stunden Speicherdauer.",
+        "duration_result_label": "Gewaehlte EPR",
+        "duration_result_help": "Hoehere EPR bedeutet mehr Stunden bei voller Leistung, meist mehr Verschiebetiefe, aber weniger MW bei gleicher MWh.",
+        "duration_power_caption": "Abgeleitete Maximalleistung: {mw:.1f} MW. Gleiche MWh, laengere Dauer bedeutet weniger MW.",
         "data_header": "Daten",
         "data_caption": "Waehle das stuendliche Marktdatenfenster fuer diesen Lauf.",
         "scenario_header": "Sensitivitaet",
-        "scenario_caption_header": "Optionaler Vergleich mit groesserem Pack und gleicher C-Rate.",
+        "scenario_caption_header": "Optionaler Vergleich mit groesserem Pack und gleicher EPR.",
         "interface_header": "Interface",
         "interface_caption": "Anzeigeeinstellungen fuer diese Sitzung.",
         "language": "Sprache",
@@ -229,6 +284,9 @@ I18N = {
         "update_caption": "Lokale Marktdaten aktualisieren (bei real-Modus und konfiguriertem API-Zugriff).",
         "run_btn": "Optimierung starten",
         "run_caption": "Optimierung ausfuehren und KPIs, Chart und Tabelle aktualisieren.",
+        "reset_defaults_btn": "Auf Standardwerte zuruecksetzen",
+        "reset_defaults_caption": "Stellt den didaktischen Basislauf wieder her.",
+        "optimizing_status": "Optimierung und Sensitivitaeten werden berechnet...",
         "hero_header": "Auf einen Blick",
         "hero_window": "Horizont: {days} Tag(e) — {steps} Stunden in diesem Lauf.",
         "hero_installed": "Installierter Speicher",
@@ -252,19 +310,32 @@ I18N = {
         "kpi_power": "Konfigurierte Maximalleistung",
         "kpi_power_help": "Maximale Lade-/Entladeleistung aus Kapazitaet und gewaehlter C-Rate.",
         "scenario_label": "Zusatz-Speicher zum Vergleich (MWh)",
-        "scenario_help": "Optionaler zweiter Lauf: gleiche C-Rate, Kapazitaet um diesen Wert erhoeht.",
+        "scenario_help": "Optionaler zweiter Lauf: gleiche Speicherdauer, Kapazitaet um diesen Wert erhoeht.",
         "scenario_caption": "Groesserer Speicher: Sensitivitaet.",
         "scenario_row_title": "Sensitivitaet vs. groesseres Pack",
         "scenario_delta_rev": "Delta Erloes",
         "scenario_delta_dis": "Delta Entladung",
         "scenario_delta_cyc": "Delta Vollzyklen",
         "scenario_delta_rev_per_mwh": "Delta Erloes / Zusatz-MWh",
+        "epr_sensitivity_title": "EPR-Sensitivitaet: 2h vs. 4h vs. 6h",
+        "epr_sensitivity_caption": "Gleiche MWh, andere Leistung. Das zeigt, wie Speicherdauer Bruttoerloes, Entladung und Zyklen in diesem Lernmodell veraendert.",
+        "epr_duration_col": "EPR",
+        "epr_power_col": "Leistung (MW)",
+        "epr_revenue_col": "Erloes (EUR)",
+        "epr_revenue_mw_col": "Erloes / MW",
+        "epr_selected_col": "Ausgewaehlt",
+        "epr_discharged_col": "Entladung (MWh)",
+        "epr_cycles_col": "Zyklen",
         "stacking_header": "Revenue-Stacking-Annahmen",
         "stacking_caption": "Einfache Lernannahmen fuer Regelenergie-, Kapazitaets- und Engpasserloese.",
         "fcr_toggle": "FCR-Verfuegbarkeit aktivieren",
         "afrr_toggle": "aFRR-Verfuegbarkeit + Aktivierung aktivieren",
         "capacity_toggle": "Kapazitaetszahlung aktivieren",
         "congestion_toggle": "Netzengpass-Bonus aktivieren",
+        "fcr_help": "Lernannahme fuer bezahlte Reserveverfuegbarkeit pro MW und Stunde.",
+        "afrr_help": "Lernannahme fuer Regelreserve-Verfuegbarkeit plus vereinfachte Aktivierungsenergie.",
+        "capacity_help": "Lernannahme fuer Verfuegbarkeitszahlungen; kein projektspezifischer Vertrag.",
+        "congestion_help": "Lernproxy fuer lokalen Netzwert in Engpassfenstern.",
         "fcr_rate_label": "FCR-Verfuegbarkeit (EUR/MW/h)",
         "afrr_avail_label": "aFRR-Verfuegbarkeit (EUR/MW/h)",
         "afrr_util_label": "aFRR-Aktivierungsverguetung (EUR/MWh)",
@@ -281,6 +352,14 @@ I18N = {
         "provenance_congestion_signal": "Engpasssignal",
         "revenue_breakdown_title": "Revenue-Aufteilung",
         "revenue_breakdown_caption": "Reale BESS-Betreiber verlassen sich selten nur auf Arbitrage. Revenue Stacking verbessert Auslastung und Risikobalance ueber verschiedene Marktphasen.",
+        "revenue_table_caption": "Aufteilung nach Lernkategorie. Gruen markierte Zeilen haengen direkt an Marktdaten; orange markierte Zeilen sind didaktische Annahmen.",
+        "breakdown_category_col": "Kategorie",
+        "breakdown_basis_col": "Basis",
+        "breakdown_value_col": "Wert (EUR)",
+        "basis_real_data": "Real Data – Preisspread",
+        "basis_learning_assumption": "Lernannahme – vereinfachter Marktproxy",
+        "assumptions_title": "Annahmen in diesem Lauf",
+        "assumptions_caption": "Diese Zusammenfassung kommt aus dem Optimizer, damit EPR, SOC, Effizienz, Horizont und aktivierte Erlosstroeme sichtbar bleiben.",
         "stream_arbitrage": "Arbitrage",
         "stream_fcr": "FCR",
         "stream_afrr_availability": "aFRR-Verfuegbarkeit",
@@ -299,6 +378,11 @@ I18N = {
         "reading_guide": "Leseguide: Positive Balken = Laden, negative Balken = Entladen, gruene Linie = SOC. Hover zeigt exakte Werte je Zeitstempel.",
         "table_title": "Stuendliche Dispatch-Tabelle",
         "table_caption": "Detaillierter Stundenoutput: Marktpreis, Batterieaktion, SOC und resultierender Schritt-Erlos.",
+        "next_steps_title": "Nächste Schritte / Was kommt als Nächstes?",
+        "next_steps_body": (
+            "Geplante Modellerweiterungen: Intraday-Handel, Imbalance-Risiko, Degradationskosten, "
+            "Portfolio-Nebenbedingungen, echte Netzsimulation mit lokaler Lastflusspruefung und detailliertere Redispatch-/Flexibilitaetsprodukte."
+        ),
         "time": "Zeit",
         "charge_power": "Ladeleistung",
         "discharge_power": "Entladeleistung",
@@ -346,12 +430,42 @@ I18N = {
 }
 
 
+SIMULATOR_DEFAULTS = {
+    "capacity_mwh_input": 3.9,
+    "storage_duration_h_input": 2,
+    "horizon_days_input": 1,
+    "data_mode_input": "sample",
+    "extra_storage_mwh_input": 0.0,
+    "enable_fcr_input": True,
+    "enable_afrr_input": True,
+    "enable_capacity_payment_input": True,
+    "enable_congestion_bonus_input": True,
+    "fcr_rate_input": 5.0,
+    "afrr_avail_rate_input": 3.0,
+    "afrr_util_rate_input": 35.0,
+    "afrr_activation_ratio_input": 0.2,
+    "capacity_rate_input": 1.6,
+    "capacity_share_input": 0.3,
+    "congestion_bonus_input": 12.0,
+    "congestion_signal_multiplier_input": 1.0,
+}
+
+
+def _reset_simulator_defaults() -> None:
+    """Restore all simulator inputs to the educational baseline."""
+
+    for key, value in SIMULATOR_DEFAULTS.items():
+        st.session_state[key] = value
+    st.session_state.optimization_signature = None
+
+
 def _hero_snapshot_html(
     ui: dict[str, str],
     *,
     horizon_days: int,
     n_steps: int,
     capacity_mwh: float,
+    storage_duration_h: int,
     power_mw: float,
     zone_load_mwh: float,
     mean_gw: float,
@@ -365,6 +479,9 @@ def _hero_snapshot_html(
         f"<div class='oa-hero-tile'><div class='oa-hero-k'>{ui['hero_installed']}</div>"
         f"<div class='oa-hero-v'>{capacity_mwh:,.1f} MWh</div>"
         f"<div class='oa-hero-s'>{ui['hero_power_sub'].format(mw=power_mw)}</div></div>"
+        f"<div class='oa-hero-tile'><div class='oa-hero-k'>{ui['duration_result_label']}</div>"
+        f"<div class='oa-hero-v'>{storage_duration_h}h</div>"
+        f"<div class='oa-hero-s'>{ui['duration_result_help']}</div></div>"
         f"<div class='oa-hero-tile'><div class='oa-hero-k'>{ui['hero_zone_load']}</div>"
         f"<div class='oa-hero-v'>{zone_load_mwh:,.0f} MWh</div>"
         f"<div class='oa-hero-s'>{ui['hero_zone_sub'].format(gw=mean_gw)}</div></div>"
@@ -569,6 +686,8 @@ def main() -> None:
         st.session_state.ui_language = "en"
     if "ui_theme" not in st.session_state:
         st.session_state.ui_theme = "warm"
+    for key, value in SIMULATOR_DEFAULTS.items():
+        st.session_state.setdefault(key, value)
 
     with st.sidebar.container(border=False):
         st.markdown(f"##### {I18N[st.session_state.ui_language]['interface_header']}")
@@ -606,42 +725,71 @@ def main() -> None:
 
     st.sidebar.header(ui["settings"])
     st.sidebar.caption(ui["settings_caption"])
+    st.sidebar.button(
+        ui["reset_defaults_btn"],
+        on_click=_reset_simulator_defaults,
+        width="stretch",
+        help=ui["reset_defaults_caption"],
+    )
+    st.sidebar.caption(ui["reset_defaults_caption"])
     st.sidebar.markdown(f"##### {ui['battery_header']}")
     st.sidebar.caption(ui["battery_caption"])
+    st.sidebar.markdown(f"###### {ui['mastr_example_header']}")
+    st.sidebar.markdown(
+        f"<div class='oa-badge-row'>{badge_html(ui['real_data_badge'], 'real')}</div>",
+        unsafe_allow_html=True,
+    )
+    if st.sidebar.button(ui["mastr_example_btn"], width="stretch"):
+        st.session_state.capacity_mwh_input = 20.0
+        st.session_state.storage_duration_h_input = 2
+    st.sidebar.caption(ui["mastr_example_caption"])
+    st.sidebar.markdown(
+        f"<div class='oa-badge-row'>{badge_html(ui['assumption_badge'], 'assumption', ui['assumption_badge_detail'])}</div>",
+        unsafe_allow_html=True,
+    )
     capacity_mwh = st.sidebar.slider(
         ui["cap_label"],
         min_value=2.0,
         max_value=40.0,
-        value=3.9,
         step=0.1,
         help=ui["cap_help"],
+        key="capacity_mwh_input",
     )
     st.sidebar.caption(ui["cap_caption"])
-    power_ratio = st.sidebar.slider(
-        ui["crate_label"],
-        min_value=0.25,
-        max_value=1.0,
-        value=0.5,
-        step=0.05,
-        help=ui["crate_help"],
+    st.sidebar.markdown(f"##### {ui['duration_header']}")
+    st.sidebar.markdown(
+        f"<div class='oa-education-note'>{ui['duration_caption']}</div>",
+        unsafe_allow_html=True,
     )
-    st.sidebar.caption(ui["crate_caption"])
+    storage_duration_h = st.sidebar.radio(
+        ui["duration_label"],
+        options=[2, 4, 6],
+        index=[2, 4, 6].index(st.session_state.storage_duration_h_input),
+        format_func=lambda hours: f"{hours}h",
+        horizontal=True,
+        help=ui["duration_help"],
+        key="storage_duration_h_input",
+    )
+    power_ratio = 1.0 / float(storage_duration_h)
     power_mw = capacity_mwh * power_ratio
+    st.sidebar.caption(ui["duration_power_caption"].format(mw=power_mw))
 
     st.sidebar.markdown(f"##### {ui['data_header']}")
     st.sidebar.caption(ui["data_caption"])
     horizon_days = st.sidebar.selectbox(
         ui["horizon_label"],
         options=[1, 2, 7],
-        index=0,
+        index=[1, 2, 7].index(st.session_state.horizon_days_input),
         help=ui["horizon_help"],
+        key="horizon_days_input",
     )
     st.sidebar.caption(ui["horizon_caption"])
     data_mode = st.sidebar.selectbox(
         ui["data_mode_label"],
         options=["sample", "real"],
-        index=0,
+        index=["sample", "real"].index(st.session_state.data_mode_input),
         help=ui["data_mode_help"],
+        key="data_mode_input",
     )
     st.sidebar.caption(ui["data_mode_caption"])
     update_clicked = st.sidebar.button(ui["update_btn"], width="stretch")
@@ -649,35 +797,75 @@ def main() -> None:
 
     st.sidebar.markdown(f"##### {ui['scenario_header']}")
     st.sidebar.caption(ui["scenario_caption_header"])
+    st.sidebar.markdown(
+        f"<div class='oa-badge-row'>{badge_html(ui['assumption_badge'], 'assumption', ui['assumption_badge_detail'])}</div>",
+        unsafe_allow_html=True,
+    )
     extra_storage_mwh = st.sidebar.slider(
         ui["scenario_label"],
         min_value=0.0,
         max_value=20.0,
-        value=0.0,
         step=0.5,
         help=ui["scenario_help"],
+        key="extra_storage_mwh_input",
     )
     st.sidebar.caption(ui["scenario_caption"])
     st.sidebar.markdown(f"##### {ui['stacking_header']}")
     st.sidebar.caption(ui["stacking_caption"])
-    enable_fcr = st.sidebar.toggle(ui["fcr_toggle"], value=True)
-    enable_afrr = st.sidebar.toggle(ui["afrr_toggle"], value=True)
-    enable_capacity_payment = st.sidebar.toggle(ui["capacity_toggle"], value=True)
-    enable_congestion_bonus = st.sidebar.toggle(ui["congestion_toggle"], value=True)
-    fcr_rate = st.sidebar.number_input(ui["fcr_rate_label"], min_value=0.0, value=5.0, step=0.5)
-    afrr_avail_rate = st.sidebar.number_input(ui["afrr_avail_label"], min_value=0.0, value=3.0, step=0.5)
-    afrr_util_rate = st.sidebar.number_input(ui["afrr_util_label"], min_value=0.0, value=35.0, step=1.0)
-    afrr_activation_ratio = st.sidebar.slider(ui["afrr_activation_label"], min_value=0.0, max_value=1.0, value=0.2, step=0.05)
-    capacity_rate = st.sidebar.number_input(ui["capacity_rate_label"], min_value=0.0, value=1.6, step=0.1)
-    capacity_share = st.sidebar.slider(ui["capacity_share_label"], min_value=0.0, max_value=1.0, value=0.3, step=0.05)
-    congestion_bonus = st.sidebar.number_input(ui["congestion_bonus_label"], min_value=0.0, value=12.0, step=1.0)
+    st.sidebar.markdown(
+        f"<div class='oa-badge-row'>{badge_html(ui['assumption_badge'], 'assumption', ui['assumption_badge_detail'])}</div>",
+        unsafe_allow_html=True,
+    )
+    enable_fcr = st.sidebar.toggle(ui["fcr_toggle"], help=ui["fcr_help"], key="enable_fcr_input")
+    enable_afrr = st.sidebar.toggle(ui["afrr_toggle"], help=ui["afrr_help"], key="enable_afrr_input")
+    enable_capacity_payment = st.sidebar.toggle(
+        ui["capacity_toggle"], help=ui["capacity_help"], key="enable_capacity_payment_input"
+    )
+    enable_congestion_bonus = st.sidebar.toggle(
+        ui["congestion_toggle"], help=ui["congestion_help"], key="enable_congestion_bonus_input"
+    )
+    fcr_rate = st.sidebar.number_input(
+        ui["fcr_rate_label"], min_value=0.0, step=0.5, help=ui["fcr_help"], key="fcr_rate_input"
+    )
+    afrr_avail_rate = st.sidebar.number_input(
+        ui["afrr_avail_label"], min_value=0.0, step=0.5, help=ui["afrr_help"], key="afrr_avail_rate_input"
+    )
+    afrr_util_rate = st.sidebar.number_input(
+        ui["afrr_util_label"], min_value=0.0, step=1.0, help=ui["afrr_help"], key="afrr_util_rate_input"
+    )
+    afrr_activation_ratio = st.sidebar.slider(
+        ui["afrr_activation_label"],
+        min_value=0.0,
+        max_value=1.0,
+        step=0.05,
+        help=ui["afrr_help"],
+        key="afrr_activation_ratio_input",
+    )
+    capacity_rate = st.sidebar.number_input(
+        ui["capacity_rate_label"], min_value=0.0, step=0.1, help=ui["capacity_help"], key="capacity_rate_input"
+    )
+    capacity_share = st.sidebar.slider(
+        ui["capacity_share_label"],
+        min_value=0.0,
+        max_value=1.0,
+        step=0.05,
+        help=ui["capacity_help"],
+        key="capacity_share_input",
+    )
+    congestion_bonus = st.sidebar.number_input(
+        ui["congestion_bonus_label"],
+        min_value=0.0,
+        step=1.0,
+        help=ui["congestion_help"],
+        key="congestion_bonus_input",
+    )
     congestion_signal_multiplier = st.sidebar.slider(
         ui["congestion_signal_label"],
         min_value=0.0,
         max_value=2.0,
-        value=1.0,
         step=0.1,
         help=ui["congestion_signal_help"],
+        key="congestion_signal_multiplier_input",
     )
     run_clicked = st.sidebar.button(ui["run_btn"], type="primary", width="stretch")
     st.sidebar.caption(ui["run_caption"])
@@ -703,6 +891,8 @@ def main() -> None:
         st.session_state.optimization_signature = None
     if "optimization_result_scenario" not in st.session_state:
         st.session_state.optimization_result_scenario = None
+    if "optimization_result_epr_scenarios" not in st.session_state:
+        st.session_state.optimization_result_epr_scenarios = None
 
     stacking_cfg = RevenueStackingConfig(
         enable_fcr=enable_fcr,
@@ -714,6 +904,7 @@ def main() -> None:
 
     optimization_signature = (
         capacity_mwh,
+        storage_duration_h,
         power_ratio,
         horizon_days,
         data_mode,
@@ -736,46 +927,63 @@ def main() -> None:
         or st.session_state.optimization_result is None
         or st.session_state.optimization_signature != optimization_signature
     ):
-        load_result = load_market_data_for_mode(mode=data_mode, periods=horizon_days * 24)
-        market_data = load_result.market_data
-        market_data = market_data.copy()
-        market_data["fcr_availability_eur_mw_h"] = fcr_rate
-        market_data["afrr_availability_eur_mw_h"] = afrr_avail_rate
-        market_data["afrr_utilization_eur_mwh"] = afrr_util_rate
-        market_data["afrr_activation_ratio"] = afrr_activation_ratio
-        market_data["capacity_payment_eur_mw_h"] = capacity_rate
-        market_data["congestion_bonus_eur_mwh"] = congestion_bonus
-        market_data["congestion_signal"] = (
-            market_data["congestion_signal"].clip(0.0, 1.0) * congestion_signal_multiplier
-        ).clip(0.0, 1.0)
-        result = optimize_bess_with_stacking(
-            market_data=market_data,
-            bess=bess,
-            stacking=stacking_cfg,
-        )
-        st.session_state.optimization_result = result
-        st.session_state.market_data = market_data
-        st.session_state.load_result = load_result
-        st.session_state.optimization_signature = optimization_signature
-        if extra_storage_mwh > 1e-6:
-            cap2 = capacity_mwh + extra_storage_mwh
-            bess_sc = BESSConfig(
-                capacity_mwh=cap2,
-                power_mw=cap2 * power_ratio,
-            )
-            st.session_state.optimization_result_scenario = optimize_bess_with_stacking(
+        with st.spinner(ui["optimizing_status"]):
+            load_result = load_market_data_for_mode(mode=data_mode, periods=horizon_days * 24)
+            market_data = load_result.market_data
+            market_data = market_data.copy()
+            market_data["fcr_availability_eur_mw_h"] = fcr_rate
+            market_data["afrr_availability_eur_mw_h"] = afrr_avail_rate
+            market_data["afrr_utilization_eur_mwh"] = afrr_util_rate
+            market_data["afrr_activation_ratio"] = afrr_activation_ratio
+            market_data["capacity_payment_eur_mw_h"] = capacity_rate
+            market_data["congestion_bonus_eur_mwh"] = congestion_bonus
+            market_data["congestion_signal"] = (
+                market_data["congestion_signal"].clip(0.0, 1.0) * congestion_signal_multiplier
+            ).clip(0.0, 1.0)
+            result = optimize_bess_with_stacking(
                 market_data=market_data,
-                bess=bess_sc,
+                bess=bess,
                 stacking=stacking_cfg,
             )
-        else:
-            st.session_state.optimization_result_scenario = None
+            st.session_state.optimization_result = result
+            st.session_state.market_data = market_data
+            st.session_state.load_result = load_result
+            st.session_state.optimization_signature = optimization_signature
+            if extra_storage_mwh > 1e-6:
+                cap2 = capacity_mwh + extra_storage_mwh
+                bess_sc = BESSConfig(
+                    capacity_mwh=cap2,
+                    power_mw=cap2 * power_ratio,
+                )
+                st.session_state.optimization_result_scenario = optimize_bess_with_stacking(
+                    market_data=market_data,
+                    bess=bess_sc,
+                    stacking=stacking_cfg,
+                )
+            else:
+                st.session_state.optimization_result_scenario = None
+            epr_scenarios = {}
+            for duration_h in (2, 4, 6):
+                if duration_h == storage_duration_h:
+                    epr_scenarios[duration_h] = result
+                    continue
+                bess_epr = BESSConfig(
+                    capacity_mwh=capacity_mwh,
+                    power_mw=capacity_mwh / float(duration_h),
+                )
+                epr_scenarios[duration_h] = optimize_bess_with_stacking(
+                    market_data=market_data,
+                    bess=bess_epr,
+                    stacking=stacking_cfg,
+                )
+            st.session_state.optimization_result_epr_scenarios = epr_scenarios
     else:
         load_result = st.session_state.load_result
         market_data = st.session_state.market_data
         result = st.session_state.optimization_result
 
     result_scenario = st.session_state.optimization_result_scenario
+    epr_scenarios = st.session_state.optimization_result_epr_scenarios or {}
 
     load_metadata = _load_result_metadata(load_result, market_data)
     source_label_map = {
@@ -803,11 +1011,18 @@ def main() -> None:
         ),
         unsafe_allow_html=True,
     )
+    st.markdown(
+        f"<div class='oa-badge-row'>{badge_html(ui['assumption_badge'], 'assumption', ui['assumption_badge_detail'])}</div>",
+        unsafe_allow_html=True,
+    )
     st.caption(ui["assumption_inputs_note"])
     if load_metadata["warning"]:
         st.warning(f"Fallback context: {load_metadata['warning']}")
     dispatch = result.dispatch
     revenue_breakdown = result.revenue_breakdown_eur or {"arbitrage": result.total_revenue_eur}
+    st.subheader(ui["assumptions_title"])
+    st.caption(ui["assumptions_caption"])
+    st.info(result.assumptions_summary)
 
     dt_h = float(bess.timestep_hours)
     zone_load_mwh = float((market_data["system_load_mw"] * dt_h).sum())
@@ -822,6 +1037,7 @@ def main() -> None:
             horizon_days=horizon_days,
             n_steps=n_steps,
             capacity_mwh=capacity_mwh,
+            storage_duration_h=storage_duration_h,
             power_mw=power_mw,
             zone_load_mwh=zone_load_mwh,
             mean_gw=mean_gw,
@@ -844,6 +1060,40 @@ def main() -> None:
                 delta_revenue_per_mwh=delta_revenue / extra_storage_mwh,
             ),
             unsafe_allow_html=True,
+        )
+
+    if epr_scenarios:
+        st.subheader(ui["epr_sensitivity_title"])
+        st.caption(ui["epr_sensitivity_caption"])
+        st.markdown(
+            f"<div class='oa-badge-row'>{badge_html(ui['assumption_badge'], 'assumption', ui['assumption_badge_detail'])}</div>",
+            unsafe_allow_html=True,
+        )
+        epr_rows = []
+        for duration_h, epr_result in sorted(epr_scenarios.items()):
+            epr_power_mw = capacity_mwh / float(duration_h)
+            epr_rows.append(
+                {
+                    ui["epr_duration_col"]: f"{duration_h}h",
+                    ui["epr_selected_col"]: "yes" if duration_h == storage_duration_h else "",
+                    ui["epr_power_col"]: epr_power_mw,
+                    ui["epr_revenue_col"]: float(epr_result.total_revenue_eur),
+                    ui["epr_revenue_mw_col"]: float(epr_result.total_revenue_eur) / max(epr_power_mw, 1e-9),
+                    ui["epr_discharged_col"]: float(epr_result.discharged_energy_mwh),
+                    ui["epr_cycles_col"]: float(epr_result.estimated_cycles),
+                }
+            )
+        st.dataframe(
+            pd.DataFrame(epr_rows),
+            width="stretch",
+            hide_index=True,
+            column_config={
+                ui["epr_power_col"]: st.column_config.NumberColumn(format="%.1f"),
+                ui["epr_revenue_col"]: st.column_config.NumberColumn(format="%.0f"),
+                ui["epr_revenue_mw_col"]: st.column_config.NumberColumn(format="%.0f"),
+                ui["epr_discharged_col"]: st.column_config.NumberColumn(format="%.1f"),
+                ui["epr_cycles_col"]: st.column_config.NumberColumn(format="%.2f"),
+            },
         )
 
     st.markdown(
@@ -898,20 +1148,38 @@ def main() -> None:
 
     st.subheader(ui["revenue_breakdown_title"])
     st.caption(ui["revenue_breakdown_caption"])
+    breakdown_basis_map = {
+        "arbitrage": ui["basis_real_data"],
+        "fcr": ui["basis_learning_assumption"],
+        "afrr_availability": ui["basis_learning_assumption"],
+        "afrr_utilization": ui["basis_learning_assumption"],
+        "capacity": ui["basis_learning_assumption"],
+        "congestion_bonus": ui["basis_learning_assumption"],
+    }
     breakdown_df = pd.DataFrame(
         {
-            "stream": [stream_name_map.get(k, k) for k in revenue_breakdown.keys()],
-            "value_eur": list(revenue_breakdown.values()),
+            ui["breakdown_category_col"]: [stream_name_map.get(k, k) for k in revenue_breakdown.keys()],
+            ui["breakdown_basis_col"]: [breakdown_basis_map.get(k, ui["basis_learning_assumption"]) for k in revenue_breakdown.keys()],
+            ui["breakdown_value_col"]: list(revenue_breakdown.values()),
         }
     )
-    breakdown_df = breakdown_df[breakdown_df["value_eur"].abs() > 1e-9]
+    breakdown_df = breakdown_df[breakdown_df[ui["breakdown_value_col"]].abs() > 1e-9]
     if not breakdown_df.empty:
+        st.caption(ui["revenue_table_caption"])
+        st.dataframe(
+            breakdown_df,
+            width="stretch",
+            hide_index=True,
+            column_config={
+                ui["breakdown_value_col"]: st.column_config.NumberColumn(format="%.0f"),
+            },
+        )
         breakdown_fig = go.Figure(
             data=[
-                go.Pie(
-                    labels=breakdown_df["stream"],
-                    values=breakdown_df["value_eur"],
-                    hole=0.45,
+                go.Bar(
+                    x=breakdown_df[ui["breakdown_value_col"]],
+                    y=breakdown_df[ui["breakdown_category_col"]],
+                    orientation="h",
                     marker=dict(
                         colors=[
                             active_tokens["primary"],
@@ -922,15 +1190,22 @@ def main() -> None:
                             "#B17A56",
                         ]
                     ),
-                    textinfo="label+percent",
+                    hovertemplate="%{y}<br>%{x:,.0f} EUR<extra></extra>",
                 )
             ]
         )
         breakdown_fig.update_layout(
             paper_bgcolor=active_tokens["background"],
             plot_bgcolor="rgba(255,255,255,0)",
-            margin=dict(l=12, r=12, t=12, b=12),
+            margin=dict(l=12, r=12, t=12, b=28),
             font=dict(color=active_tokens["text"]),
+            xaxis=dict(
+                title="EUR",
+                gridcolor="rgba(212, 199, 181, 0.36)",
+                zeroline=True,
+                zerolinecolor="rgba(46, 74, 62, 0.45)",
+            ),
+            yaxis=dict(title=""),
         )
         st.plotly_chart(breakdown_fig, width="stretch", config={"displaylogo": False})
 
@@ -1088,6 +1363,13 @@ def main() -> None:
     )
     st.dataframe(dispatch_table, width="stretch")
 
+    st.markdown("<div class='oa-section-spacer'></div>", unsafe_allow_html=True)
+    st.subheader(ui["next_steps_title"])
+    st.markdown(
+        f"<div class='oa-education-note'>{ui['next_steps_body']}</div>",
+        unsafe_allow_html=True,
+    )
+
     st.divider()
     st.subheader("AI Assistant")
     settings = load_chat_settings()
@@ -1238,6 +1520,8 @@ def main() -> None:
                             status.update(label="Request failed", state="error")
                     st.markdown(answer)
             st.session_state.chat_history.append({"role": "assistant", "content": answer})
+
+    render_education_footer()
 
 
 if __name__ == "__main__":

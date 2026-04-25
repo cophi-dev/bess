@@ -47,6 +47,8 @@ def test_revenue_breakdown_sums_to_total_revenue() -> None:
     breakdown_total = sum(result.revenue_breakdown_eur.values())
     assert breakdown_total == pytest.approx(result.total_revenue_eur)
     assert result.dispatch["step_revenue_eur"].sum() == pytest.approx(result.total_revenue_eur)
+    assert "2.0h EPR" in result.assumptions_summary
+    assert "Enabled revenue streams" in result.assumptions_summary
 
 
 def test_disabled_revenue_streams_contribute_zero() -> None:

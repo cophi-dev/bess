@@ -12,6 +12,7 @@ src/open_autobidder/config.py
 src/open_autobidder/data_ingestion.py
 src/open_autobidder/data_loader.py
 src/open_autobidder/init.py
+src/open_autobidder/mastr.py
 src/open_autobidder/optimizer.py
 src/open_autobidder/models/megapack.py
 src/open_autobidder_de.egg-info/PKG-INFO

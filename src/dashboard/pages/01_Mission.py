@@ -11,7 +11,7 @@ PROJECT_SRC = Path(__file__).resolve().parents[2]
 if str(PROJECT_SRC) not in sys.path:
     sys.path.insert(0, str(PROJECT_SRC))
 
-from dashboard.theme import apply_design_theme
+from dashboard.theme import render_education_footer, apply_design_theme
 
 
 def main() -> None:
@@ -52,6 +52,8 @@ def main() -> None:
     with col_grid:
         st.markdown("### Grid Context")
         st.write("Frame market-strong dispatch against local grid usefulness and constraints.")
+
+    render_education_footer()
 
 
 main()

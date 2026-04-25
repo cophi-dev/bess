@@ -12,7 +12,7 @@ PROJECT_SRC = Path(__file__).resolve().parents[1]
 if str(PROJECT_SRC) not in sys.path:
     sys.path.insert(0, str(PROJECT_SRC))
 
-from dashboard.theme import apply_design_theme
+from dashboard.theme import apply_design_theme, render_education_footer
 
 
 PAGES = [
@@ -60,9 +60,9 @@ def main() -> None:
     col_mission, col_data, col_simulator, col_vnb = st.columns(4)
     cards = [
         (col_mission, "01", "Mission", "Why OpenAutobidder-DE exists and how it supports transparent BESS learning."),
-        (col_data, "02", "Data", "Placeholder for ENTSO-E and market-data documentation in the next step."),
+        (col_data, "02", "Data", "Real MaStR context for German BESS capacity, power, and storage duration."),
         (col_simulator, "03", "Simulator", "Current optimizer workflow with settings, KPIs, charts, and revenue stack."),
-        (col_vnb, "04", "VNB Matrix", "Placeholder for the local-grid decision lens."),
+        (col_vnb, "04", "VNB Matrix", "Local-grid decision lens for market attractiveness and grid impact."),
     ]
     for column, number, title, body in cards:
         with column:
@@ -78,6 +78,7 @@ def main() -> None:
             )
 
     st.info("Open the Simulator page from the sidebar to run the existing optimization workflow.")
+    render_education_footer()
 
 
 if __name__ == "__main__":
