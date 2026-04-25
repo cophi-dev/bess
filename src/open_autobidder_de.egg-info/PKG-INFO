@@ -1,0 +1,234 @@
+Metadata-Version: 2.4
+Name: open-autobidder-de
+Version: 0.1.0
+Summary: Tesla Autobidder-inspired BESS optimization engine for the German power market.
+Author: OpenAutobidder-DE Contributors
+License: MIT
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: pandas>=2.2.0
+Requires-Dist: pyarrow>=16.0.0
+Requires-Dist: numpy>=1.26.0
+Requires-Dist: scipy>=1.12.0
+Requires-Dist: pulp>=2.8.0
+Requires-Dist: streamlit>=1.34.0
+Requires-Dist: plotly>=5.20.0
+Requires-Dist: pydantic>=2.6.0
+Requires-Dist: entsoe-py>=0.6.18
+Requires-Dist: typer>=0.12.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=5.0.0; extra == "dev"
+Requires-Dist: ruff>=0.5.0; extra == "dev"
+Requires-Dist: mypy>=1.10.0; extra == "dev"
+
+# OpenAutobidder-DE
+
+OpenAutobidder-DE ist ein Open-Source-Projekt fuer die Optimierung von Battery Energy Storage Systems (BESS) im deutschen Strommarkt, inspiriert von Tesla Autobidder und Tesla Megapack, mit Fokus auf **Revenue Stacking** statt reiner Arbitrage.
+
+OpenAutobidder-DE is an open-source optimization engine for Battery Energy Storage Systems (BESS) in the German power market, inspired by Tesla Autobidder and Tesla Megapack, focused on **multi-revenue stacking** rather than pure arbitrage.
+
+## Current Status
+
+**ENTSO-E integration is implemented. Live mode activates when `ENTSOE_API_TOKEN` is set; otherwise the app uses sample/fallback data.**
+
+The project is fully runnable with a bundled 7-day German sample dataset in `data/sample/` (day-ahead prices + wind/solar generation). Real ENTSO-E ingestion is already implemented and can be enabled as soon as the API token is available.
+
+## Warum dieses Projekt? | Why this project?
+
+**DE:**  
+Der deutsche Strommarkt braucht flexible Speicher, um Preisschwankungen, Netzengpaesse und hohe Redispatch-Kosten besser zu managen. Besonders in Norddeutschland mit starkem Offshore-Wind-Ausbau entstehen haeufig Situationen mit Curtailment und lokaler Netzueberlastung.  
+OpenAutobidder-DE soll zeigen, wie eine Tesla-Autobidder-aehnliche Optimierungslogik fuer Megapack-klasse BESS eingesetzt werden kann, um:
+
+- Arbitrage-Erlöse zu steigern
+- Netzengpaesse indirekt zu reduzieren
+- Curtailment-Energie sinnvoller zu nutzen
+- Redispatch-bezogene Kosten zu senken
+
+**EN:**  
+Germany needs flexible storage to manage volatility, congestion, and redispatch costs. This is especially true in Northern Germany, where offshore wind integration often leads to curtailment and local grid bottlenecks.  
+OpenAutobidder-DE aims to demonstrate a Tesla Autobidder-inspired optimization stack for Megapack-class BESS to:
+
+- Stack arbitrage with ancillary and availability revenues
+- Support congestion-aware operation
+- Better absorb curtailed renewable energy
+- Reduce system-level redispatch burden
+
+## Tesla-Bezug | Tesla relevance
+
+**DE:** Dieses Projekt ist explizit von Tesla Energy inspiriert: von der Produktidee **Megapack** bis zur softwaregetriebenen Vermarktung via **Autobidder**. OpenAutobidder-DE ist kein offizielles Tesla-Produkt, orientiert sich aber bewusst an denselben Prinzipien: datengetriebene Prognose, algorithmische Dispatch-Optimierung, kontinuierliche Verbesserung.
+
+**EN:** This project is explicitly inspired by Tesla Energy, from **Megapack** as storage hardware concept to **Autobidder** as software-centric optimization platform. OpenAutobidder-DE is not an official Tesla product, but intentionally follows similar principles: data-driven forecasting, algorithmic dispatch optimization, and iterative model improvement.
+
+## Roadmap (Phase 1-5)
+
+1. **Phase 1 - Foundation (current)**
+   - Projektstruktur, Konfigurationsmodelle, Datenlade-Pipeline
+   - Lineare Day-Ahead-Arbitrage + vereinfachtes Revenue Stacking (FCR/aFRR/Kapazitaet/Kongestion)
+   - Streamlit-Visualisierung inkl. Revenue-Breakdown
+2. **Phase 2 - Real Data Integration**
+   - Echte SMARD- und ggf. ENTSO-E-Daten
+   - Datenqualitaetschecks, Cleaning, Feature Engineering
+   - Regionenfokus Norddeutschland
+3. **Phase 3 - Grid-Aware Extensions**
+   - Congestion-/Redispatch-Signale als Nebenbedingungen
+   - Multi-Markt-Logik (z. B. Day-Ahead + Intraday + detaillierte ancillary service co-optimization)
+4. **Phase 4 - AI and Operations**
+   - Prognosemodelle (Preis, Erzeugung, Last)
+   - RL-basierte Strategien als optionaler Layer
+   - Szenario-Simulation fuer Betriebsstrategien
+5. **Phase 5 - Production-Grade System**
+   - Service-Orchestrierung, robustes Monitoring, Alerting
+   - API-First Architektur, rollenbasierte Dashboards
+   - Feldnahe Integration fuer reale BESS-Portfolios
+
+## Public website (BESS Kompass)
+
+The Next.js app in `web/` is the public **BESS Kompass** experience (concepts and German market context first, then the open **OpenAutobidder-DE** model in Streamlit). Product name roles and IA live in `DESIGN.md`.
+
+## Tech-Stack
+
+- Python 3.11+
+- `pandas`, `numpy`, `scipy`
+- `PuLP` (spaeter optional `cvxpy` oder `ortools`)
+- `streamlit` fuer Dashboard
+- `plotly` fuer Visualisierungen
+- `pydantic` fuer Konfiguration
+- `typer` fuer CLI
+
+## Projektstruktur
+
+```text
+OpenAutobidder-DE/
+├── README.md
+├── pyproject.toml
+├── requirements.txt
+├── .gitignore
+├── data/
+│   └── raw/
+├── src/
+│   ├── open_autobidder/
+│   │   ├── init.py
+│   │   ├── config.py
+│   │   ├── data_loader.py
+│   │   ├── optimizer.py
+│   │   └── models/
+│   │       └── megapack.py
+│   └── dashboard/
+│       └── app.py
+├── notebooks/
+└── tests/
+```
+
+## Schnellstart | Quickstart
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Run the project (single command):
+
+```bash
+streamlit run src/dashboard/app.py
+```
+
+The dashboard defaults to sample mode and includes:
+
+- `Run Optimization` button
+- charge/discharge schedule chart
+- key KPIs (total revenue, stream-level contributions, avg buy/sell price, estimated cycles)
+- revenue breakdown chart for stacked streams (arbitrage, ancillary, capacity, congestion bonus)
+
+## Revenue Stacking Model (Educational)
+
+The simulator now demonstrates why German BESS operators rarely rely on arbitrage alone:
+
+- **Arbitrage:** charging low / discharging high on day-ahead prices
+- **Ancillary services:** simplified FCR and aFRR availability + utilization terms
+- **Capacity payments:** configurable EUR/MW/h availability component
+- **Congestion signal bonus:** optional north-focused redispatch/congestion proxy
+
+This model is intentionally simplified for learning and prototyping, but keeps the optimization structure compatible with realistic co-optimization workflows.
+
+## ENTSO-E Data Ingestion (ready, pending key)
+
+OpenAutobidder-DE now supports automatic market data ingestion from the ENTSO-E Transparency Platform.
+
+### 1) Get a free ENTSO-E API key
+
+1. Create an account on the [ENTSO-E Transparency Platform](https://transparency.entsoe.eu/).
+2. Open your account settings/profile area and request a Web API security token.
+3. Copy the token and export it locally:
+
+```bash
+export ENTSOE_API_TOKEN="your_token_here"
+```
+
+Optional runtime scope (MVP defaults shown):
+
+```bash
+export OPENAUTOBIDDER_MARKET_ZONE="DE_LU"
+export OPENAUTOBIDDER_MARKET_INTERVAL="1h"
+```
+
+### 2) Update local market data
+
+Fetch and cache the latest day-ahead prices plus wind/solar generation:
+
+```bash
+PYTHONPATH=src python -m open_autobidder.data_ingestion update
+```
+
+Optional: fetch a specific lookback window:
+
+```bash
+PYTHONPATH=src python -m open_autobidder.data_ingestion update --days 14
+```
+
+Cached files are written as Parquet snapshots to `data/processed/`.
+
+### 3) No API key yet? Project works with sample data
+
+If ENTSO-E is unavailable (no key, API outage, network issue), the app falls back gracefully:
+
+1. Bundled sample dataset in `data/sample/*_sample.csv` (default mode)
+2. Latest local ENTSO-E cache in `data/processed/` (real mode)
+3. Synthetic fallback data (last resort)
+
+This keeps the dashboard and optimizer usable out of the box.
+
+The dashboard also surfaces data provenance (source mode, configured market scope, and fallback context).
+
+### 4) Future automation plans
+
+Planned next step is scheduled refresh automation, for example:
+
+- `cron` on a self-hosted machine (daily/hourly updates)
+- GitHub Actions workflow (scheduled ingestion + artifact/versioned data handling)
+- Monitoring/alerts when ingestion fails repeatedly
+
+## Future Plans
+
+- Enable live ENTSO-E ingestion in regular operation once API access is confirmed
+- Add automatic daily refresh via scheduler
+- Extend optimization with congestion-aware and multi-market constraints
+- Add forecasting modules for price and renewable generation
+
+## Mitmachen | Contributing
+
+Wir freuen uns ueber Contributions aus den Bereichen Energiesysteme, Optimierung, Data Science und Python Engineering.
+
+We welcome contributions from energy systems, optimization, data science, and Python engineering practitioners.
+
+**Bevorzugter Ablauf | Preferred workflow**
+
+1. Fork erstellen und Branch anlegen
+2. Kleine, atomare Aenderungen mit Tests einreichen
+3. Klaren PR-Kontext geben (Was, Warum, Wie getestet)
+4. Diskussionen offen und datenbasiert fuehren
+
+## Hinweis | Disclaimer
+
+Dieses Projekt dient Forschung, Prototyping und Bildung. Es stellt keine Handels- oder Investitionsberatung dar und ist nicht mit Tesla, Inc. verbunden.
