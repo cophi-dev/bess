@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type React from "react";
+import { OPEN_CHAT_PREFILL_EVENT, type ChatPrefillEventDetail } from "@/components/chat-events";
 import { DataLiveMetricsView } from "@/components/data-live-metrics-view";
 
 jest.mock("next/link", () => {
@@ -78,5 +79,35 @@ describe("DataLiveMetricsView", () => {
     fireEvent.change(slider, { target: { value: "1000" } });
 
     expect(screen.getByText(/1000 MW/)).toBeInTheDocument();
+  });
+
+  it("opens the AI chat with current and 24h analysis prompts", async () => {
+    const chatEvents: Array<CustomEvent<ChatPrefillEventDetail>> = [];
+    const onChatPrefill = (event: Event) => {
+      chatEvents.push(event as CustomEvent<ChatPrefillEventDetail>);
+    };
+    window.addEventListener(OPEN_CHAT_PREFILL_EVENT, onChatPrefill);
+
+    render(<DataLiveMetricsView />);
+
+    await waitFor(() => {
+      expect(screen.getByText("49.995 Hz")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Aktuelle Lage analysieren" }));
+    fireEvent.click(screen.getByRole("button", { name: "Analyse 24h" }));
+
+    window.removeEventListener(OPEN_CHAT_PREFILL_EVENT, onChatPrefill);
+
+    expect(chatEvents).toHaveLength(2);
+    expect(chatEvents[0].detail).toEqual(
+      expect.objectContaining({
+        submit: true,
+        prompt: expect.stringContaining("grid-stabilisierendes Verhalten"),
+      }),
+    );
+    expect(chatEvents[0].detail.prompt).toContain("Verbrauch: 61.0 GW");
+    expect(chatEvents[1].detail.prompt).toContain("vergangenen 24 Stunden");
+    expect(chatEvents[1].detail.prompt).toContain("Engpaesse/Redispatch mindern");
   });
 });

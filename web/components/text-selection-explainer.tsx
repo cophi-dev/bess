@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CHAT_WIDGET_STATE_EVENT, OPEN_CHAT_PREFILL_EVENT } from "@/components/chat-widget";
+import { CHAT_WIDGET_STATE_EVENT, OPEN_CHAT_PREFILL_EVENT } from "@/components/chat-events";
 
 type FloatingCtaState = {
   text: string;

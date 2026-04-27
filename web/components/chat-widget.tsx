@@ -1,11 +1,9 @@
 "use client";
 
-import { FormEvent, KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-
-export const OPEN_CHAT_PREFILL_EVENT = "openautobidder:chat-prefill";
-export const CHAT_WIDGET_STATE_EVENT = "openautobidder:chat-state";
+import { CHAT_WIDGET_STATE_EVENT, OPEN_CHAT_PREFILL_EVENT, type ChatPrefillEventDetail } from "@/components/chat-events";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -218,21 +216,53 @@ export function ChatWidget() {
   );
   const showQuickPrompts = !hasUserMessage;
 
-  useEffect(() => {
-    const handlePrefillEvent = (event: Event) => {
-      const customEvent = event as CustomEvent<{ prompt?: string }>;
-      const prompt = customEvent.detail?.prompt?.trim();
-      if (!prompt) return;
-      setIsOpen(true);
-      setQuestion(prompt);
-      setError(null);
-    };
+  const askQuestion = useCallback(
+    async function askQuestion(input: string) {
+      const trimmed = input.trim();
+      if (!trimmed || isLoading) return;
 
-    window.addEventListener(OPEN_CHAT_PREFILL_EVENT, handlePrefillEvent as EventListener);
-    return () => {
-      window.removeEventListener(OPEN_CHAT_PREFILL_EVENT, handlePrefillEvent as EventListener);
-    };
-  }, []);
+      setError(null);
+      const userMessage: ChatMessage = { role: "user", content: trimmed };
+      const updatedMessages = [...messages, userMessage];
+      setMessages(updatedMessages);
+      setQuestion("");
+      setIsLoading(true);
+
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            question: trimmed,
+            history: updatedMessages,
+            pageContext,
+          }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(typeof data?.error === "string" ? data.error : "Antwort nicht verfuegbar.");
+        }
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content:
+              typeof data?.answer === "string" && data.answer.trim()
+                ? data.answer
+                : "Ich konnte gerade keine Antwort erzeugen. Bitte versuche es erneut.",
+          },
+        ]);
+      } catch (requestError) {
+        setError(
+          requestError instanceof Error ? requestError.message : "Unerwarteter Fehler beim Chat.",
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [isLoading, messages, pageContext],
+  );
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 767px)");
@@ -291,50 +321,26 @@ export function ChatWidget() {
     return () => window.removeEventListener("keydown", onEscape);
   }, []);
 
-  async function askQuestion(input: string) {
-    const trimmed = input.trim();
-    if (!trimmed || isLoading) return;
+  useEffect(() => {
+    const handlePrefillEvent = (event: Event) => {
+      const customEvent = event as CustomEvent<ChatPrefillEventDetail>;
+      const prompt = customEvent.detail?.prompt?.trim();
+      if (!prompt) return;
 
-    setError(null);
-    const userMessage: ChatMessage = { role: "user", content: trimmed };
-    const updatedMessages = [...messages, userMessage];
-    setMessages(updatedMessages);
-    setQuestion("");
-    setIsLoading(true);
-
-    try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          question: trimmed,
-          history: updatedMessages,
-          pageContext,
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(typeof data?.error === "string" ? data.error : "Antwort nicht verfuegbar.");
+      setIsOpen(true);
+      setError(null);
+      if (customEvent.detail?.submit) {
+        void askQuestion(prompt);
+        return;
       }
+      setQuestion(prompt);
+    };
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content:
-            typeof data?.answer === "string" && data.answer.trim()
-              ? data.answer
-              : "Ich konnte gerade keine Antwort erzeugen. Bitte versuche es erneut.",
-        },
-      ]);
-    } catch (requestError) {
-      setError(
-        requestError instanceof Error ? requestError.message : "Unerwarteter Fehler beim Chat.",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }
+    window.addEventListener(OPEN_CHAT_PREFILL_EVENT, handlePrefillEvent as EventListener);
+    return () => {
+      window.removeEventListener(OPEN_CHAT_PREFILL_EVENT, handlePrefillEvent as EventListener);
+    };
+  }, [askQuestion]);
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { FadeIn } from "@/components/fade-in";
+import { OPEN_CHAT_PREFILL_EVENT, type ChatPrefillEventDetail } from "@/components/chat-events";
 
 type LiveMetricSource = {
   provider: string;
@@ -47,6 +48,113 @@ function latestAndPreviousDelta(points: Array<{ value: number }>): { latest: num
   const previous = points[0].value;
   if (previous === 0) return { latest, deltaPct: null };
   return { latest, deltaPct: ((latest - previous) / previous) * 100 };
+}
+
+function formatMw(value: number) {
+  return `${(value / 1000).toFixed(1)} GW`;
+}
+
+function formatTrendSummary(label: string, points: Array<{ asOf: string; value: number }>, unit: string, decimals = 0) {
+  if (points.length === 0) return `${label}: keine Daten`;
+  const values = points.map((point) => point.value);
+  const first = values[0];
+  const latest = values[values.length - 1];
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const average = values.reduce((sum, value) => sum + value, 0) / values.length;
+  const deltaPct = first === 0 ? null : ((latest - first) / first) * 100;
+
+  return [
+    `${label}: aktuell ${latest.toFixed(decimals)} ${unit}`,
+    `Start ${first.toFixed(decimals)} ${unit}`,
+    `Min/Max ${min.toFixed(decimals)}/${max.toFixed(decimals)} ${unit}`,
+    `Durchschnitt ${average.toFixed(decimals)} ${unit}`,
+    `Delta ${deltaPct === null ? "n/a" : `${deltaPct >= 0 ? "+" : ""}${deltaPct.toFixed(1)} %`}`,
+  ].join("; ");
+}
+
+function formatSourceSummary(sources: LiveMetricSource[]) {
+  if (sources.length === 0) return "Quellen: keine Detailquellen angegeben";
+  return `Quellen: ${sources
+    .slice(0, 4)
+    .map((source) => `${source.provider} (${source.metric}, ${source.stale ? "stale" : "live"})`)
+    .join("; ")}`;
+}
+
+function dispatchChatAnalysis(prompt: string) {
+  window.dispatchEvent(
+    new CustomEvent<ChatPrefillEventDetail>(OPEN_CHAT_PREFILL_EVENT, {
+      detail: { prompt, submit: true },
+    }),
+  );
+}
+
+function buildCurrentAnalysisPrompt(
+  metrics: LiveMetricsPayload,
+  extraBessMw: number,
+  estimatedExtraBessMwh: number,
+  peakShavingMw: number,
+  renewableAbsorptionMwh: number,
+  balancingStressReliefPct: number,
+) {
+  const generationMix = metrics.generationMix
+    .slice(0, 6)
+    .map((entry) => `${entry.fuel}: ${formatMw(entry.mw)} (${entry.sharePct.toFixed(1)} %)`)
+    .join("; ");
+  const bessSoc = metrics.bessSoc
+    ? `${metrics.bessSoc.pct.toFixed(1)} %, Quelle ${metrics.bessSoc.source}, ${metrics.bessSoc.simulated ? "simuliert" : metrics.bessSoc.stale ? "stale" : "live"}`
+    : "keine SoC-Telemetrie verfuegbar";
+
+  return `Analysiere die aktuelle deutsche BESS- und Netzlage anhand dieser Data-Seite.
+
+Aktuelle Werte:
+- Verbrauch: ${formatMw(metrics.consumptionMw)}
+- Erzeugung: ${formatMw(metrics.productionMw)}
+- Netzfrequenz: ${metrics.frequencyHz.toFixed(3)} Hz
+- Installierte BESS: ${formatMw(metrics.installedBessMw)} / ${(metrics.installedBessMwh / 1000).toFixed(1)} GWh
+- Strommix: ${generationMix || "nicht verfuegbar"}
+- BESS SoC: ${bessSoc}
+- Datenstand: ${metrics.asOf}
+- ${formatSourceSummary(metrics.sources)}
+- Datenhinweise: ${metrics.qualityFlags.length > 0 ? metrics.qualityFlags.join(", ") : "keine"}
+
+Was-waere-wenn auf der Seite:
+- Zusatzspeicher: ${extraBessMw} MW / ${estimatedExtraBessMwh} MWh
+- Peak-Entlastung: ${peakShavingMw.toFixed(0)} MW
+- Erhoehte RES-Aufnahme: ${renewableAbsorptionMwh.toFixed(0)} MWh
+- Balancing-Stress-Proxy: -${balancingStressReliefPct.toFixed(2)} %
+
+Bitte gib eine knappe Lageeinschaetzung mit Risiken, Chancen und konkreten BESS-Betriebsimplikationen. In der Schlussfolgerung nicht nur Arbitrage-Trading betrachten, sondern grid-stabilisierendes Verhalten betonen: Frequenzhaltung, Peak-Entlastung, Redispatch-/Engpassreduktion und Aufnahme erneuerbarer Ueberschuesse.`;
+}
+
+function buildPast24hAnalysisPrompt(
+  metrics: LiveMetricsPayload,
+  extraBessMw: number,
+  estimatedExtraBessMwh: number,
+  peakShavingMw: number,
+  renewableAbsorptionMwh: number,
+  balancingStressReliefPct: number,
+) {
+  return `Analysiere die vergangenen 24 Stunden der deutschen BESS- und Netzlage anhand dieser Data-Seite.
+
+24h-Trends:
+- ${formatTrendSummary("Verbrauch", metrics.consumptionTrend, "MW")}
+- ${formatTrendSummary("Erzeugung", metrics.productionTrend, "MW")}
+- ${formatTrendSummary("Netzfrequenz", metrics.frequencyTrend, "Hz", 3)}
+
+Aktueller Kontext:
+- Verbrauch jetzt: ${formatMw(metrics.consumptionMw)}
+- Erzeugung jetzt: ${formatMw(metrics.productionMw)}
+- Netzfrequenz jetzt: ${metrics.frequencyHz.toFixed(3)} Hz
+- Installierte BESS: ${formatMw(metrics.installedBessMw)} / ${(metrics.installedBessMwh / 1000).toFixed(1)} GWh
+- Simulierter Zusatzspeicher: ${extraBessMw} MW / ${estimatedExtraBessMwh} MWh
+- Peak-Entlastung: ${peakShavingMw.toFixed(0)} MW
+- Erhoehte RES-Aufnahme: ${renewableAbsorptionMwh.toFixed(0)} MWh
+- Balancing-Stress-Proxy: -${balancingStressReliefPct.toFixed(2)} %
+- Datenstand: ${metrics.asOf}
+- Datenhinweise: ${metrics.qualityFlags.length > 0 ? metrics.qualityFlags.join(", ") : "keine"}
+
+Bitte erklaere, was die 24h-Entwicklung fuer Speicherbetrieb bedeutet. Die Schlussfolgerung soll grid-stabilisierendes Verhalten klar hoeher gewichten als reine Arbitrage: Lastspitzen glaetten, Frequenzabweichungen puffern, Erneuerbare aufnehmen, Engpaesse/Redispatch mindern und Systemdienlichkeit begruenden.`;
 }
 
 export function DataLiveMetricsView() {
@@ -195,6 +303,44 @@ export function DataLiveMetricsView() {
                 Datenhinweise: {liveMetrics.qualityFlags.join(", ")}
               </p>
             )}
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() =>
+                  dispatchChatAnalysis(
+                    buildCurrentAnalysisPrompt(
+                      liveMetrics,
+                      extraBessMw,
+                      estimatedExtraBessMwh,
+                      peakShavingMw,
+                      renewableAbsorptionMwh,
+                      balancingStressReliefPct,
+                    ),
+                  )
+                }
+                className="rounded-card bg-primary px-4 py-2 text-sm font-medium text-white transition hover:bg-primary/90"
+              >
+                Aktuelle Lage analysieren
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  dispatchChatAnalysis(
+                    buildPast24hAnalysisPrompt(
+                      liveMetrics,
+                      extraBessMw,
+                      estimatedExtraBessMwh,
+                      peakShavingMw,
+                      renewableAbsorptionMwh,
+                      balancingStressReliefPct,
+                    ),
+                  )
+                }
+                className="rounded-card border border-primary/20 bg-surface px-4 py-2 text-sm font-medium text-primary transition hover:border-primary/40 hover:bg-background-alt"
+              >
+                Analyse 24h
+              </button>
+            </div>
           </>
         )}
       </FadeIn>
