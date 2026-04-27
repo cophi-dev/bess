@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type React from "react";
-import { DailyBriefingView } from "@/components/daily-briefing-view";
+import { DataLiveMetricsView } from "@/components/data-live-metrics-view";
 
 jest.mock("next/link", () => {
   const MockLink = ({ children, href }: { children: React.ReactNode; href: string }) => (
@@ -15,17 +15,6 @@ jest.mock("@/components/fade-in", () => ({
     displayName: "MockFadeIn",
   }),
 }));
-
-const briefingPayload = {
-  briefing: {
-    date: "24. April 2026",
-    lesson: { title: "Test Lesson", content: "One.\n\nTwo." },
-    news: [{ headline: "Headline", facts: "Facts", einordnung: "Einordnung" }],
-    insights: ["Insight 1", "Insight 2", "Insight 3"],
-  },
-  cached: false,
-  generatedAt: new Date().toISOString(),
-};
 
 const livePayload = {
   metrics: {
@@ -58,15 +47,10 @@ const livePayload = {
   generatedAt: new Date().toISOString(),
 };
 
-describe("DailyBriefingView", () => {
+describe("DataLiveMetricsView", () => {
   beforeEach(() => {
     global.fetch = jest
       .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => briefingPayload,
-      } as Response)
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
@@ -75,12 +59,12 @@ describe("DailyBriefingView", () => {
       .mockResolvedValue({
         ok: true,
         status: 200,
-        json: async () => briefingPayload,
+        json: async () => livePayload,
       } as Response);
   });
 
   it("renders live metrics and recalculates impact slider", async () => {
-    render(<DailyBriefingView />);
+    render(<DataLiveMetricsView />);
 
     await waitFor(() => {
       expect(screen.getByText("49.995 Hz")).toBeInTheDocument();
@@ -96,4 +80,3 @@ describe("DailyBriefingView", () => {
     expect(screen.getByText(/1000 MW/)).toBeInTheDocument();
   });
 });
-

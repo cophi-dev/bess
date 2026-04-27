@@ -1,32 +1,32 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { DailyBriefingView } from "@/components/daily-briefing-view";
 import { FadeIn } from "@/components/fade-in";
-import { NewsFeedView } from "@/components/news-feed-view";
 
 export const metadata: Metadata = {
   title: "News",
   description:
-    "Kuratierte Updates zu Markt, Regulierung und Technologie rund um BESS in Deutschland.",
+    "Tagesbriefing, kuratierte Updates und Einordnung zu Markt, Regulierung und Technologie rund um BESS in Deutschland.",
 };
 
 const newsItems = [
   {
-    title: "Marktupdate",
-    text: "Wie Preisniveaus, Volatilitaet und Flexibilitaetsbedarf die BESS-Erlosstruktur veraendern.",
+    title: "Tagesbriefing",
+    text: "Die kompakte Lage fuer heute: was passiert ist, warum es fuer Speicher relevant ist und was du als Naechstes pruefen solltest.",
+    href: "#tagesbriefing",
+    cta: "Briefing lesen",
+  },
+  {
+    title: "Live-KPIs",
+    text: "Verbrauch, Erzeugung, Netzfrequenz und installierte BESS-Leistung bleiben als operative Datenbasis auf Data.",
     href: "/data",
-    cta: "Zu Data und Live-KPIs",
+    cta: "Live-Daten ansehen",
   },
   {
-    title: "Herausforderungen",
-    text: "Welche Markt-, Netz- und Standortfragen fuer neue Projekte relevant sind.",
+    title: "Kontext",
+    text: "Markt-, Netz- und Standortfragen einordnen, bevor Simulationen oder Projektannahmen vertieft werden.",
     href: "/herausforderungen",
-    cta: "Herausforderungen lesen",
-  },
-  {
-    title: "Projektfokus",
-    text: "Welche Kennzahlen fuer Entscheidungen jetzt priorisiert werden sollten.",
-    href: "/mission",
-    cta: "Mission und What now",
+    cta: "Kontext verstehen",
   },
 ];
 
@@ -34,10 +34,14 @@ export default function NewsPage() {
   return (
     <div className="container-shell py-16 md:py-20">
       <FadeIn className="max-w-3xl">
+        <p className="text-sm font-medium uppercase tracking-[0.18em] text-accent">
+          News
+        </p>
         <h1 className="text-4xl md:text-5xl">News</h1>
         <p className="mt-4 text-lg text-text-secondary">
-          Diese Seite buendelt die wichtigsten Entwicklungen fuer den deutschen
-          BESS-Kontext: Marktdynamik, Herausforderungen und operative Prioritaeten.
+          Der zentrale Anlaufpunkt fuer neue Entwicklungen im deutschen BESS-Kontext:
+          Tagesbriefing, Marktnachrichten, Einordnung und direkte Wege zu Live-Daten
+          und Simulation.
         </p>
       </FadeIn>
 
@@ -62,7 +66,7 @@ export default function NewsPage() {
         ))}
       </section>
 
-      <NewsFeedView />
+      <DailyBriefingView />
     </div>
   );
 }

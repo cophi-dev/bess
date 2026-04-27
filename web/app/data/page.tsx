@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { DailyBriefingView } from "@/components/daily-briefing-view";
+import { DataLiveMetricsView } from "@/components/data-live-metrics-view";
 
 export const metadata: Metadata = {
   title: "Data",
   description:
-    "Live-Metriken, Tagesupdate und zentrale Key Metrics fuer den deutschen BESS-Markt.",
+    "Live-Metriken und zentrale Key Metrics fuer den deutschen BESS-Markt.",
 };
 
 export default function DataPage() {
-  return <DailyBriefingView />;
+  return <DataLiveMetricsView />;
 }
